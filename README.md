@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
 
-OkBinder is an alternative to AIDL. 
+[OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.kt) is an alternative to AIDL. 
 OkBinder is very lightweight, with only one class, 100+ lines of code.
 With OkBinder you can find errors in IPC earlier.
 
@@ -69,6 +69,6 @@ class MyActivity: Activity(), ServiceConnection {
 }
 ```
 
-If you want to learn more about the usage of OkBinder, please refer to OkBinderSample.
+If you want to learn more about the usage of OkBinder, please refer to [OkBinderSample](https://github.com/7hens/okbinder/blob/master/sample/src/main/java/cn/thens/okbinder/sample/OkBinderSample.kt).
 
 *如果你想跟深入了解 OkBinder 的用法，请参考 OkBinderSample.*
