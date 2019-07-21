@@ -1,0 +1,20 @@
+apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'maven'
+
+group = GROUP_ID
+version = VERSION
+
+publish {
+    userOrg = USER_ORG
+    groupId = GROUP_ID
+    artifactId = project.name
+    publishVersion = VERSION
+    desc = DESCRIPTION
+    website = WEBSITE
+}
+
+uploadArchives {
+    repositories {
+        mavenLocal()
+    }
+}
