@@ -1,16 +1,20 @@
 # OkBinder
 
+[![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
+[![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
+[![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
+
 OkBinder is an alternative to AIDL. 
 OkBinder is very lightweight, with only one class, 100+ lines of code.
 With OkBinder you can find errors in IPC earlier.
 
-*OkBinder 是 AIDL 的一个替代方案。
+*OkBinder 是一个 AIDL 的替代方案。
 OkBinder 非常轻量级，只有一个类，100+行代码。
 使用 OkBinder 你可以更早的发现 IPC 中的错误。*
 
 ## Setting up the dependency
 
-last_version: 0.1.0 
+last_version: [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
 
 ```groovy
 implementation 'cn.thens:okbinder:<last_version>'
