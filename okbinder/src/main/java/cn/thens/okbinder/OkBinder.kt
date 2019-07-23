@@ -18,7 +18,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
     init {
         val remoteInterface = (remoteObject.javaClass.interfaces ?: emptyArray())
             .filter { it.isAnnotationPresent(Interface::class.java) }
-            .also { require(it.size == 1) { "remote object must implement only one OkBinder.Service" } }
+            .also { require(it.size == 1) { "remote object must implement only one interface with @${Interface::class.java.simpleName} annotation" } }
             .first()
         for (method in remoteInterface.declaredMethods) {
             if (method.isBridge) continue
@@ -72,7 +72,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
         @Suppress("UNCHECKED_CAST")
         fun <T> proxy(binder: IBinder, serviceClass: Class<T>): T {
             require(serviceClass.isInterface && serviceClass.isAnnotationPresent(Interface::class.java)) {
-                "class must be a interface annotated with RemoteInterface"
+                "class must be an interface with @${Interface::class.java.simpleName} annotation"
             }
             if (binder is OkBinder) return binder.remoteObject as T
             val classLoader = serviceClass.classLoader
@@ -107,9 +107,9 @@ class OkBinder(private val remoteObject: Any) : Binder() {
 
         private fun getMethodId(method: Method): String {
             val params = method.parameterTypes.joinToString(",") { it.name }
-            val redundantMethodId = method.declaringClass.name + "." + method.name + "@" + params
-            val md5 = MessageDigest.getInstance("MD5").digest(redundantMethodId.toByteArray())
-            return Base64.encodeToString(md5, Base64.DEFAULT)
+            val methodSignature = method.declaringClass.name + "." + method.name + "@" + params
+            val md5 = MessageDigest.getInstance("MD5").digest(methodSignature.toByteArray())
+            return Base64.encodeToString(md5, Base64.NO_WRAP)
         }
     }
 }
