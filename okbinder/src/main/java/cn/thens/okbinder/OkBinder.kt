@@ -18,7 +18,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
     init {
         val remoteInterface = (remoteObject.javaClass.interfaces ?: emptyArray())
             .filter { it.isAnnotationPresent(Interface::class.java) }
-            .also { require(it.size == 1) { "remote object must implement only one interface with @${Interface::class.java.simpleName} annotation" } }
+            .also { require(it.size == 1) { "remote object must implement only one interface with @OkBinder.Interface annotation" } }
             .first()
         for (method in remoteInterface.declaredMethods) {
             if (method.isBridge) continue
@@ -72,7 +72,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
         @Suppress("UNCHECKED_CAST")
         fun <T> proxy(binder: IBinder, serviceClass: Class<T>): T {
             require(serviceClass.isInterface && serviceClass.isAnnotationPresent(Interface::class.java)) {
-                "class must be an interface with @${Interface::class.java.simpleName} annotation"
+                "class must be an interface with @OkBinder.Interface annotation"
             }
             if (binder is OkBinder) return binder.remoteObject as T
             val classLoader = serviceClass.classLoader
