@@ -69,6 +69,7 @@ class MainActivity : Activity(), ServiceConnection {
                 Log.d(TAG, ">> ** ICallback.onResult: result = $data ** <<")
             }
         })
+        Log.d(TAG, "end of onServiceConnected")
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {

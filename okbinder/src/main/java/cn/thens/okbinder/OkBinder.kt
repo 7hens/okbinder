@@ -92,7 +92,8 @@ class OkBinder(private val remoteObject: Any) : Binder() {
                             data.writeValue(arg)
                         }
                     }
-                    binder.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, 0)
+                    val flags = if (method.returnType == Void.TYPE) IBinder.FLAG_ONEWAY else 0
+                    binder.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, flags)
                     reply.readException()
                     if (reply.readInt() != 0) {
                         result = reply.readValue(classLoader)
