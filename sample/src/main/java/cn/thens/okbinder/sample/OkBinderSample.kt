@@ -20,7 +20,7 @@ interface IRemoteService {
 
     fun testError(aBoolean: Boolean, aParcelable: Parcelable)
 
-    fun testCallback(data: String, callback: ICallback)
+    fun testCallback(data: String, callback: ICallback): ICallback
 }
 
 @OkBinder.Interface
@@ -62,13 +62,15 @@ class MainActivity : Activity(), ServiceConnection {
         } catch (e: Exception) {
             Log.e(TAG, "remoteService.testError => \n" + Log.getStackTraceString(e))
         }
-        remoteService.testCallback("Hello, OkBinder :)", object : ICallback {
+        val callback = remoteService.testCallback("Hello, OkBinder :)", object : ICallback {
             override val data: String = "I_CALLBACK_DATA"
 
             override fun onResult(result: String) {
-                Log.d(TAG, ">> ** ICallback.onResult: result = $data ** <<")
+                Log.d(TAG, ">> ** ICallback.onResult: result = $result ** <<")
             }
         })
+        Log.d(TAG, "callback.data... = ${callback.data}")
+        callback.onResult("CALLBACK_RESULT ...")
         Log.d(TAG, "end of onServiceConnected")
     }
 
@@ -89,10 +91,11 @@ abstract class BaseService : Service() {
             throw NullPointerException()
         }
 
-        override fun testCallback(data: String, callback: ICallback) {
+        override fun testCallback(data: String, callback: ICallback): ICallback {
             Log.d(TAG, ">> ** IRemoteService.testCallback: data = $data ** <<")
             Log.d(TAG, ">> ** IRemoteService.testCallback: callback.data = ${callback.data} ** <<")
             callback.onResult("CALLBACK_RESULT")
+            return callback
         }
     })
 

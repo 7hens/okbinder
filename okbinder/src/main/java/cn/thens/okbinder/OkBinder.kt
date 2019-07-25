@@ -17,7 +17,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
 
     init {
         val remoteInterface = (remoteObject.javaClass.interfaces ?: emptyArray())
-            .filter { it.isAnnotationPresent(Interface::class.java) }
+            .filter { it.isOkBinderInterface() }
             .also { require(it.size == 1) { "remote object must implement only one interface with @OkBinder.Interface annotation" } }
             .first()
         for (method in remoteInterface.declaredMethods) {
@@ -40,25 +40,20 @@ class OkBinder(private val remoteObject: Any) : Binder() {
                 } else {
                     val classLoader = remoteObject.javaClass.classLoader
                     remoteMethod.invoke(remoteObject, *run {
-                        Array(paramTypes.size) { index ->
-                            data.readValue(classLoader).let { arg ->
-                                arg.takeIf { !paramTypes[index].isAnnotationPresent(Interface::class.java) }
-                                    ?: proxy(arg as IBinder, paramTypes[index])
-                            }
-                        }
+                        Array(paramTypes.size) { adaptOutput(data.readValue(classLoader), paramTypes[it]) }
                     })
                 }
                 reply.writeNoException()
                 if (result != null) {
                     reply.writeInt(1)
-                    reply.writeValue(result)
+                    reply.writeValue(adaptInput(result, remoteMethod.returnType))
                 } else {
                     reply.writeInt(0)
                 }
                 return true
             } catch (e: Exception) {
                 val cause = e.cause.takeIf { e is InvocationTargetException } ?: e
-                Log.e("@OkBinder", "", cause)
+                Log.e("@OkBinder", "from Service", cause)
                 throw cause
             }
         }
@@ -71,9 +66,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
     companion object {
         @Suppress("UNCHECKED_CAST")
         fun <T> proxy(binder: IBinder, serviceClass: Class<T>): T {
-            require(serviceClass.isInterface && serviceClass.isAnnotationPresent(Interface::class.java)) {
-                "class must be an interface with @OkBinder.Interface annotation"
-            }
+            require(serviceClass.isOkBinderInterface()) { "class must be an interface with @OkBinder.Interface annotation" }
             if (binder is OkBinder) return binder.remoteObject as T
             val classLoader = serviceClass.classLoader
             val descriptor = serviceClass.name
@@ -86,17 +79,13 @@ class OkBinder(private val remoteObject: Any) : Binder() {
                     data.writeInterfaceToken(descriptor)
                     data.writeString(getMethodId(method))
                     args?.forEachIndexed { index, arg ->
-                        if (method.parameterTypes[index].isAnnotationPresent(Interface::class.java)) {
-                            data.writeValue(if (arg == null) null else OkBinder(arg))
-                        } else {
-                            data.writeValue(arg)
-                        }
+                        data.writeValue(adaptInput(arg, method.parameterTypes[index]))
                     }
                     val flags = if (method.returnType == Void.TYPE) IBinder.FLAG_ONEWAY else 0
                     binder.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, flags)
                     reply.readException()
                     if (reply.readInt() != 0) {
-                        result = reply.readValue(classLoader)
+                        result = adaptOutput(reply.readValue(classLoader)!!, method.returnType)
                     }
                 } finally {
                     reply.recycle()
@@ -106,11 +95,23 @@ class OkBinder(private val remoteObject: Any) : Binder() {
             })!!
         }
 
+        private fun adaptInput(value: Any?, type: Class<*>): Any? {
+            return if (value != null && type.isOkBinderInterface()) OkBinder(value) else value
+        }
+
+        private fun adaptOutput(value: Any?, type: Class<*>): Any? {
+            return if (value != null && type.isOkBinderInterface()) proxy(value as IBinder, type) else value
+        }
+
         private fun getMethodId(method: Method): String {
             val params = method.parameterTypes.joinToString(",") { it.name }
             val methodSignature = method.declaringClass.name + "." + method.name + "@" + params
             val md5 = MessageDigest.getInstance("MD5").digest(methodSignature.toByteArray())
             return Base64.encodeToString(md5, Base64.NO_WRAP)
+        }
+
+        private fun Class<*>.isOkBinderInterface(): Boolean {
+            return isInterface && isAnnotationPresent(Interface::class.java)
         }
     }
 }
