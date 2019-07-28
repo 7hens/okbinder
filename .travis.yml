@@ -1,0 +1,16 @@
+language: android
+dist: trusty
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-28.0.3
+    - android-28
+    - extra-google-m2repository
+    - extra-android-m2repository
+    - sys-img-x86-android-26
+    - sys-img-armeabi-v7a-android-17
+before_install:
+  - chmod +x gradlew
+script:
+  - ./gradlew assembleRelease

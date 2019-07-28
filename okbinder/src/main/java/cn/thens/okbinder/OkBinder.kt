@@ -40,13 +40,13 @@ class OkBinder(private val remoteObject: Any) : Binder() {
                 } else {
                     val classLoader = remoteObject.javaClass.classLoader
                     remoteMethod.invoke(remoteObject, *run {
-                        Array(paramTypes.size) { adaptOutput(data.readValue(classLoader), paramTypes[it]) }
+                        Array(paramTypes.size) { adaptToProxy(data.readValue(classLoader), paramTypes[it]) }
                     })
                 }
                 reply.writeNoException()
                 if (result != null) {
                     reply.writeInt(1)
-                    reply.writeValue(adaptInput(result, remoteMethod.returnType))
+                    reply.writeValue(adaptToBinder(result, remoteMethod.returnType))
                 } else {
                     reply.writeInt(0)
                 }
@@ -69,23 +69,22 @@ class OkBinder(private val remoteObject: Any) : Binder() {
             require(serviceClass.isOkBinderInterface()) { "class must be an interface with @OkBinder.Interface annotation" }
             if (binder is OkBinder) return binder.remoteObject as T
             val classLoader = serviceClass.classLoader
-            val descriptor = serviceClass.name
             return serviceClass.cast(Proxy.newProxyInstance(classLoader, arrayOf(serviceClass)) { _, method, args ->
                 if (!binder.isBinderAlive) throw RuntimeException("binder has died")
                 val data = Parcel.obtain()
                 val reply = Parcel.obtain()
                 var result: Any? = null
                 try {
-                    data.writeInterfaceToken(descriptor)
+                    data.writeInterfaceToken(serviceClass.name)
                     data.writeString(getMethodId(method))
                     args?.forEachIndexed { index, arg ->
-                        data.writeValue(adaptInput(arg, method.parameterTypes[index]))
+                        data.writeValue(adaptToBinder(arg, method.parameterTypes[index]))
                     }
                     val flags = if (method.returnType == Void.TYPE) IBinder.FLAG_ONEWAY else 0
                     binder.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, flags)
                     reply.readException()
                     if (reply.readInt() != 0) {
-                        result = adaptOutput(reply.readValue(classLoader)!!, method.returnType)
+                        result = adaptToProxy(reply.readValue(classLoader)!!, method.returnType)
                     }
                 } finally {
                     reply.recycle()
@@ -95,11 +94,11 @@ class OkBinder(private val remoteObject: Any) : Binder() {
             })!!
         }
 
-        private fun adaptInput(value: Any?, type: Class<*>): Any? {
+        private fun adaptToBinder(value: Any?, type: Class<*>): Any? {
             return if (value != null && type.isOkBinderInterface()) OkBinder(value) else value
         }
 
-        private fun adaptOutput(value: Any?, type: Class<*>): Any? {
+        private fun adaptToProxy(value: Any?, type: Class<*>): Any? {
             return if (value != null && type.isOkBinderInterface()) proxy(value as IBinder, type) else value
         }
 
