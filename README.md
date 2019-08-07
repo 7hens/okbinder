@@ -1,9 +1,9 @@
-# OkBinder
-
 [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
 ![Travis (.org)](https://img.shields.io/travis/7hens/okbinder)
 [![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
+
+# OkBinder
 
 [OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.kt) is an alternative to AIDL. 
 OkBinder is very lightweight, with only one class, 100+ lines of code.
