@@ -20,7 +20,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
             .filter { it.isOkBinderInterface() }
             .also { require(it.size == 1) { "remote object must implement only one interface with @OkBinder.Interface annotation" } }
             .first()
-        for (method in remoteInterface.declaredMethods) {
+        for (method in remoteInterface.methods) {
             if (method.isBridge) continue
             remoteMethods[getMethodId(method)] = method
         }
@@ -51,7 +51,7 @@ class OkBinder(private val remoteObject: Any) : Binder() {
                     reply.writeInt(0)
                 }
                 return true
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 val cause = e.cause.takeIf { e is InvocationTargetException } ?: e
                 Log.e("@OkBinder", "from Service", cause)
                 throw cause
