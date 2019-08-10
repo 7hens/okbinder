@@ -12,7 +12,7 @@ android:
     - sys-img-armeabi-v7a-android-17
 before_install:
   - pwd
-  - list -la
+  - ls -a
   - chmod +x ./gradlew
 script:
   - ./gradlew assembleRelease
