@@ -32,7 +32,7 @@ public class OKBinderSample {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
-            IRemoteService remoteService = OkBinder.client(IRemoteService.class, service);
+            IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
             Log.d(TAG, "client: test => " + remoteService.test());
             try {
                 remoteService.testError(false, ComponentName.unflattenFromString("a.b/.c"));
@@ -40,7 +40,7 @@ public class OKBinderSample {
                 Log.e(TAG, "client: testError => \n" + Log.getStackTraceString(e));
             }
             try {
-                IRemoteService callback = OkBinder.client(remoteService.testCallback(createRemoteInterface("callback")));
+                IRemoteService callback = OkBinder.proxy(remoteService.testCallback(createRemoteInterface("callback")));
             } catch (Throwable  e) {
                 Log.e(TAG, "client: callback error => \n" + Log.getStackTraceString(e));
             }
@@ -87,7 +87,7 @@ public class OKBinderSample {
     }
 
     private static OkBinder<IRemoteService> createRemoteInterface(String tag) {
-        return OkBinder.server(new IRemoteService() {
+        return OkBinder.create(new IRemoteService() {
             @Override
             public String test() {
                 Log.d(TAG, ">> ** " + tag + ": test ** <<");
@@ -103,7 +103,7 @@ public class OKBinderSample {
             @Override
             public OkBinder<IRemoteService> testCallback(OkBinder<IRemoteService> callback) {
                 Log.d(TAG, ">> ** " + tag + ": testCallback ** <<");
-                IRemoteService remoteInterface = OkBinder.client(callback);
+                IRemoteService remoteInterface = OkBinder.proxy(callback);
                 remoteInterface.test();
                 return callback;
             }

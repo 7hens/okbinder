@@ -81,21 +81,21 @@ public final class OkBinder<T> extends Binder implements IInterface {
         return super.onTransact(code, data, reply, flags);
     }
 
-    public static <T> OkBinder<T> server(Class<T> serviceClass, T remoteObject) {
+    public static <T> OkBinder<T> create(Class<T> serviceClass, T remoteObject) {
         return new OkBinder<>(serviceClass, remoteObject);
     }
 
-    public static <T> OkBinder<T> server(T remoteObject) {
+    public static <T> OkBinder<T> create(T remoteObject) {
         Class<?>[] interfaces = remoteObject.getClass().getInterfaces();
         require(interfaces.length == 1, "remoteObject can only implement one interface");
-        return server((Class<T>) interfaces[0], remoteObject);
+        return create((Class<T>) interfaces[0], remoteObject);
     }
 
-    public static <T> T client(OkBinder<T> okBinder) {
+    public static <T> T proxy(OkBinder<T> okBinder) {
         return okBinder.remoteObject;
     }
 
-    public static <T> T client(final Class<T> serviceClass, final IBinder binder) {
+    public static <T> T proxy(final Class<T> serviceClass, final IBinder binder) {
         require(serviceClass.isInterface(), "service class must be an interface");
         if (binder instanceof OkBinder) return ((OkBinder<T>) binder).remoteObject;
         final ClassLoader classLoader = serviceClass.getClassLoader();
@@ -137,10 +137,12 @@ public final class OkBinder<T> extends Binder implements IInterface {
     private static Object readValueFromParcel(Parcel parcel, ClassLoader classLoader, Type type) {
         if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
-            Type rawType = (parameterizedType).getRawType();
-            if (rawType == OkBinder.class) {
-                Class serviceClass = (Class) parameterizedType.getActualTypeArguments()[0];
-                return server(serviceClass, client(serviceClass, (IBinder) parcel.readValue(classLoader)));
+            if (parameterizedType.getRawType() == OkBinder.class) {
+                Type argumentType = parameterizedType.getActualTypeArguments()[0];
+                if (argumentType instanceof Class<?>) {
+                    Class serviceClass = (Class) argumentType;
+                    return create(serviceClass, proxy(serviceClass, (IBinder) parcel.readValue(classLoader)));
+                }
             }
         }
         return parcel.readValue(classLoader);

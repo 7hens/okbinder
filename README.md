@@ -5,7 +5,7 @@
 
 # OkBinder
 
-[OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.kt) is an alternative to AIDL. 
+[OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java) is an alternative to AIDL.
 OkBinder is very lightweight, with only one class, 100+ lines of code.
 With OkBinder you can find errors in IPC earlier.
 
@@ -23,12 +23,11 @@ implementation 'cn.thens:okbinder:<last_version>'
 
 ## Sample usage
 
-Define a remote interface with @OkBinder.Interface annotation.
+Define a remote interface in pure Java/Kotlin.
 
-*使用注解 @OkBinder.Interface 修饰远程服务接口。*
+*使用 Java/Kotlin 定义一个远程服务接口。*
 
 ```kotlin
-@OkBinder.Interface
 interface IRemoteService {
     fun doSomething(aInt: Int, aLong: Long, aString: String)
 }
@@ -40,7 +39,7 @@ On the server side, instantiate OkBinder using the remote interface above.
 
 ```kotlin
 class MyService: Service() {
-    private val okBinder = OkBinder(object: IRemoteService {
+    private val okBinder = OkBinder.create(object: IRemoteService {
         override fun doSomething(aInt: Int, aLong: Long, aString: String) {
             // pass
         }
@@ -59,7 +58,7 @@ On the client side, create a proxy for the remote interface.
 ```kotlin
 class MyActivity: Activity(), ServiceConnection {
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        val remoteService = OkBinder.proxy(service!!, IRemoteService::class.java)
+        val remoteService = OkBinder.proxy(IRemoteService::class.java, service!!)
         remoteService.doSomething(0, 0L, "")      
     }
     
@@ -70,6 +69,6 @@ class MyActivity: Activity(), ServiceConnection {
 }
 ```
 
-If you want to learn more about the usage of OkBinder, please refer to [OkBinderSample](https://github.com/7hens/okbinder/blob/master/sample/src/main/java/cn/thens/okbinder/sample/OkBinderSample.kt).
+If you want to learn more about the usage of OkBinder, please refer to [OkBinderSample](https://github.com/7hens/okbinder/blob/master/sample/src/main/java/cn/thens/okbinder/sample/OkBinderSample.java).
 
 *如果你想跟深入了解 OkBinder 的用法，请参考 OkBinderSample.*
