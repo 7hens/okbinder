@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import cn.thens.okbinder.OkBinder;
 
-public class OKBinderSample {
+public class OkBinderSample {
     private static final String TAG = "@OkBinder";
 
     interface IRemoteService {
