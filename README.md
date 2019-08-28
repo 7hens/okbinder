@@ -27,7 +27,7 @@ Define a remote interface with @OkBinder.Interface annotation in pure Java/Kotli
 
 *使用 @OkBinder.Interface 注解定义一个远程服务接口。*
 
-```kotlin
+```java
 @OkBinder.Interface
 public interface IRemoteService {
     void doSomething(int aInt, IRemoteService callback);
@@ -38,7 +38,7 @@ On the server side, create a Binder using the remote interface above.
 
 *在服务端，使用上面的远程接口创建一个 Binder。*
 
-```kotlin
+```java
 public class MyService extends Service {
     private Binder okBinder = OkBinder.create(new IRemoteService() {
         @Override
@@ -58,7 +58,7 @@ On the client side, create a proxy for the remote interface.
 
 *在客户端，创建一个远程接口的代理。*
 
-```kotlin
+```java
 public class MyActivity extends Activity implements ServiceConnection {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
