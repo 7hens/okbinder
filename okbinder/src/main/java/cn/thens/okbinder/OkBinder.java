@@ -197,11 +197,9 @@ public final class OkBinder {
                 SparseArray val = (SparseArray) v;
                 int size = val.size();
                 parcel.writeInt(size);
-                int i = 0;
-                while (i < size) {
+                for (int i = 0; i < size; i++) {
                     parcel.writeInt(val.keyAt(i));
-                    parcel.writeValue(val.valueAt(i));
-                    i++;
+                    writeValue(parcel, val.valueAt(i));
                 }
             } else if (v instanceof Map) {
                 parcel.writeInt(VAL_MAP);
