@@ -34,9 +34,9 @@ public interface IRemoteService {
 }
 ```
 
-On the server side, instantiate OkBinder using the remote interface above.
+On the server side, create a Binder using the remote interface above.
 
-*在服务端，使用上面的远程接口创建 OkBinder 的实例。*
+*在服务端，使用上面的远程接口创建一个 Binder。*
 
 ```kotlin
 public class MyService extends Service {
@@ -76,4 +76,5 @@ public class MyActivity extends Activity implements ServiceConnection {
 
 If you want to learn more about the usage of OkBinder, please refer to [OkBinderSample](https://github.com/7hens/okbinder/blob/master/sample/src/main/java/cn/thens/okbinder/sample/OkBinderSample.java).
 
-*如果你想跟深入了解 OkBinder 的用法，请参考 OkBinderSample.*
+*如果你想跟深入了解 OkBinder 的用法，请参考 OkBinderSample。*
+
