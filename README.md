@@ -15,6 +15,8 @@ OkBinder 非常轻量级，只有一个类，200+行代码。
 
 ## Setting up the dependency
 
+last_version: [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
+
 ```groovy
 implementation 'cn.thens:okbinder:<last_version>'
 ```
@@ -27,8 +29,8 @@ Define a remote interface with @OkBinder.Interface annotation in pure Java/Kotli
 
 ```kotlin
 @OkBinder.Interface
-interface IRemoteService {
-    fun doSomething(aInt: Int, aLong: Long, aString: String)
+public interface IRemoteService {
+    void doSomething(int aInt, IRemoteService callback);
 }
 ```
 
@@ -37,15 +39,17 @@ On the server side, instantiate OkBinder using the remote interface above.
 *在服务端，使用上面的远程接口创建 OkBinder 的实例。*
 
 ```kotlin
-class MyService: Service() {
-    private val okBinder = OkBinder.create(object: IRemoteService {
-        override fun doSomething(aInt: Int, aLong: Long, aString: String) {
+public class MyService extends Service {
+    private Binder okBinder = OkBinder.create(new IRemoteService() {
+        @Override
+        public void doSomething(int aInt, IRemoteService callback) {
             // pass
         }
     })
-    
-    override fun onBind(intent: Intent?): IBinder? {
-        return okBinder
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return okBinder;
     }
 }
 ```
@@ -55,15 +59,17 @@ On the client side, create a proxy for the remote interface.
 *在客户端，创建一个远程接口的代理。*
 
 ```kotlin
-class MyActivity: Activity(), ServiceConnection {
-    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        val remoteService = OkBinder.proxy(IRemoteService::class.java, service!!)
-        remoteService.doSomething(0, 0L, "")      
+public class MyActivity extends Activity implements ServiceConnection {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        IRemoteService remoteService = OkBinder.proxy(IRemoteService.java, service);
+        remoteService.doSomething(0, remoteService);
     }
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        bindService(Intent(this, MyService::class.java), this, Context.BIND_AUTO_CREATE)
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        bindService(new Intent(this, MyService::class.java), this, Context.BIND_AUTO_CREATE);
     }
 }
 ```
