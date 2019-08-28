@@ -18,12 +18,13 @@ import cn.thens.okbinder.OkBinder;
 public class OkBinderSample {
     private static final String TAG = "@OkBinder";
 
+    @OkBinder.Interface
     interface IRemoteService {
         String test();
 
         void testError(Boolean aBoolean, Parcelable aParcelable);
 
-        OkBinder<IRemoteService> testCallback(OkBinder<IRemoteService> callback);
+        IRemoteService testCallback(IRemoteService callback);
     }
 
     public static class MainActivity extends Activity implements ServiceConnection {
@@ -33,19 +34,21 @@ public class OkBinderSample {
         public void onServiceConnected(ComponentName name, IBinder service) {
             Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
             IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
+            Log.d(TAG, "client: test");
             Log.d(TAG, "client: test => " + remoteService.test());
             try {
+                Log.d(TAG, "client: testError");
                 remoteService.testError(false, ComponentName.unflattenFromString("a.b/.c"));
             } catch (Exception e) {
                 Log.e(TAG, "client: testError => \n" + Log.getStackTraceString(e));
             }
             try {
-                IRemoteService callback = OkBinder.proxy(remoteService.testCallback(createRemoteInterface("callback")));
+                Log.d(TAG, "client: callback");
+                IRemoteService callback =remoteService.testCallback(createRemoteInterface("callback"));
             } catch (Throwable  e) {
                 Log.e(TAG, "client: callback error => \n" + Log.getStackTraceString(e));
             }
-            Log.d(TAG, "client: callback");
-            Log.d(TAG, "end of onServiceConnected");
+            Log.d(TAG, "client: end of onServiceConnected");
         }
 
         @Override
@@ -72,7 +75,7 @@ public class OkBinderSample {
     }
 
     public static abstract class BaseService extends Service {
-        private Binder okBinder = createRemoteInterface("service");
+        private Binder okBinder = OkBinder.create(createRemoteInterface("service"));
 
         @Override
         public IBinder onBind(Intent intent) {
@@ -86,8 +89,8 @@ public class OkBinderSample {
     public static class RemoteService extends BaseService {
     }
 
-    private static OkBinder<IRemoteService> createRemoteInterface(String tag) {
-        return OkBinder.create(new IRemoteService() {
+    private static IRemoteService createRemoteInterface(String tag) {
+        return new IRemoteService() {
             @Override
             public String test() {
                 Log.d(TAG, ">> ** " + tag + ": test ** <<");
@@ -101,13 +104,12 @@ public class OkBinderSample {
             }
 
             @Override
-            public OkBinder<IRemoteService> testCallback(OkBinder<IRemoteService> callback) {
+            public IRemoteService testCallback(IRemoteService callback) {
                 Log.d(TAG, ">> ** " + tag + ": testCallback ** <<");
-                IRemoteService remoteInterface = OkBinder.proxy(callback);
-                remoteInterface.test();
+                callback.test();
                 return callback;
             }
-        });
+        };
     }
 
 }

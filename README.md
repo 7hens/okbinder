@@ -6,16 +6,14 @@
 # OkBinder
 
 [OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java) is an alternative to AIDL.
-OkBinder is very lightweight, with only one class, 100+ lines of code.
+OkBinder is very lightweight, with only one class, 200+ lines of code.
 With OkBinder you can find errors in IPC earlier.
 
 *OkBinder 是一个 AIDL 的替代方案。
-OkBinder 非常轻量级，只有一个类，100+行代码。
+OkBinder 非常轻量级，只有一个类，200+行代码。
 使用 OkBinder 你可以更早的发现 IPC 中的错误。*
 
 ## Setting up the dependency
-
-last_version: [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
 
 ```groovy
 implementation 'cn.thens:okbinder:<last_version>'
@@ -23,11 +21,12 @@ implementation 'cn.thens:okbinder:<last_version>'
 
 ## Sample usage
 
-Define a remote interface in pure Java/Kotlin.
+Define a remote interface with @OkBinder.Interface annotation in pure Java/Kotlin.
 
-*使用 Java/Kotlin 定义一个远程服务接口。*
+*使用 @OkBinder.Interface 注解定义一个远程服务接口。*
 
 ```kotlin
+@OkBinder.Interface
 interface IRemoteService {
     fun doSomething(aInt: Int, aLong: Long, aString: String)
 }
