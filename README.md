@@ -69,7 +69,7 @@ public class MyActivity extends Activity implements ServiceConnection {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        bindService(new Intent(this, MyService::class.java), this, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, MyService.java), this, Context.BIND_AUTO_CREATE);
     }
 }
 ```
