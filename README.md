@@ -5,13 +5,25 @@
 
 # OkBinder
 
-[OkBinder](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java) is an alternative to AIDL.
-OkBinder is very lightweight, with only one class, 200+ lines of code.
-With OkBinder you can find errors in IPC earlier.
+OkBinder 是一个轻量级的跨进程通信方案，可以用来替代 AIDL。
 
-*OkBinder 是一个 AIDL 的替代方案。
-OkBinder 非常轻量级，只有一个类，200+行代码。
-使用 OkBinder 你可以更早的发现 IPC 中的错误。*
+_OkBinder is a lightweight IPC library that can be used to replace AIDL._
+
+## Features
+
+| 特点               | AIDL                   | OkBinder                   |
+| ------------------ | ---------------------- | -------------------------- |
+| 实现方式           | AIDL 接口              | 纯 Java/Kotlin 接口        |
+| 并行调用           | 支持                   | 支持                       |
+| 多客户端并用       | 支持                   | 支持                       |
+| 获取方法的返回值   | 支持                   | 支持                       |
+| 通过参数传值       | 使用 in                | 默认支持                   |
+| 通过参数取值       | 使用 out               | _不支持_                   |
+| 通过参数传值并取值 | 使用 inout             | _不支持_                   |
+| 非阻塞式调用       | 使用 oneway            | 返回值类型使用 void        |
+| 异常日志           | 不完整                 | 完整                       |
+| 编译器智能提示     | 较少（需手动 import）  | 完整（因为是纯 Java 代码） |
+| 重构代价           | 麻烦（需要重新 build） | 简单（无需 build）         |
 
 ## Setting up the dependency
 
@@ -23,9 +35,9 @@ implementation 'cn.thens:okbinder:<last_version>'
 
 ## Sample usage
 
-Define a remote interface with @OkBinder.Interface annotation in pure Java/Kotlin.
+首先，你需要定义一个用于 IPC 的服务接口。这个接口的功能类似于 AIDL，但不同的是，这是一个纯 Java 的接口，并且需要使用 `@OkBinder.Interface` 注解。
 
-*使用 @OkBinder.Interface 注解定义一个远程服务接口。*
+_First, you need to define a service interface for IPC. Similar to AIDL, but the difference is that this is a pure Java interface and needs to be annotated with `@OkBinder.Interface`._
 
 ```java
 @OkBinder.Interface
@@ -34,9 +46,9 @@ public interface IRemoteService {
 }
 ```
 
-On the server side, create a Binder using the remote interface above.
+其次，在服务端，你需要实现上面的服务接口，并用它来创建一个 Binder 供客户端调用。
 
-*在服务端，使用上面的远程接口创建一个 Binder。*
+_Second, on the server side, you need to implement the above service interface and use it to create a Binder to provide to the client._
 
 ```java
 public class MyService extends Service {
@@ -54,9 +66,9 @@ public class MyService extends Service {
 }
 ```
 
-On the client side, create a proxy for the remote interface.
+最后，你可以使用客户端的 IBinder 创建出一个服务接口的代理对象。使用这个代理，就可以进行跨进程通信了。
 
-*在客户端，创建一个远程接口的代理。*
+_Finally, you can use the client's IBinder to create a proxy object for the service interface. Use this proxy to communicate across processes._
 
 ```java
 public class MyActivity extends Activity implements ServiceConnection {
@@ -74,7 +86,4 @@ public class MyActivity extends Activity implements ServiceConnection {
 }
 ```
 
-If you want to learn more about the usage of OkBinder, please refer to [OkBinderSample](https://github.com/7hens/okbinder/blob/master/sample/src/main/java/cn/thens/okbinder/sample/OkBinderSample.java).
-
-*如果你想跟深入了解 OkBinder 的用法，请参考 OkBinderSample。*
-
+> 最后的最后，OkBinder 真的很轻量哦，只有一个类，200+行代码。你完全可以直接把它（[OkBinder.java](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java)）拷贝到你的代码里。喜欢的话，记得 star 哦。
