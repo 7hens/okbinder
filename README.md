@@ -22,7 +22,7 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 | 通过参数传值并取值 | 使用 inout             | _不支持_                   |
 | 非阻塞式调用       | 使用 oneway            | 返回值类型使用 void        |
 | 异常日志           | 不完整                 | 完整                       |
-| 编译器智能提示     | 较少（需手动 import）  | 完整（因为是纯 Java 代码） |
+| IDE 智能提示     | 较少（需手动 import）  | 完整（因为是纯 Java 代码） |
 | 重构代价           | 麻烦（需要重新 build） | 简单（无需 build）         |
 
 ## Setting up the dependency
