@@ -1,9 +1,9 @@
+# OkBinder
+
 [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
 ![Travis (.org)](https://img.shields.io/travis/7hens/okbinder)
 [![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
-
-# OkBinder
 
 OkBinder 是一个轻量级的跨进程通信方案，可以用来替代 AIDL。
 
@@ -17,10 +17,11 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 | 并行调用           | 支持                   | 支持                       |
 | 多客户端并用       | 支持                   | 支持                       |
 | 获取方法的返回值   | 支持                   | 支持                       |
+| 非阻塞式调用       | 使用 oneway            | 返回值类型使用 void        |
 | 通过参数传值       | 使用 in                | 默认支持                   |
 | 通过参数取值       | 使用 out               | _不支持_                   |
 | 通过参数传值并取值 | 使用 inout             | _不支持_                   |
-| 非阻塞式调用       | 使用 oneway            | 返回值类型使用 void        |
+| 通过参数回调       | 支持                   | 支持                       |
 | 异常日志           | 不完整                 | 完整                       |
 | IDE 智能提示     | 较少（需手动 import）  | 完整（因为是纯 Java 代码） |
 | 重构代价           | 麻烦（需要重新 build） | 简单（无需 build）         |
