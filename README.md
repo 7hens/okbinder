@@ -1,7 +1,7 @@
 # OkBinder
 
 [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
-![Travis (.org)](https://img.shields.io/travis/7hens/okbinder)
+![Travis](https://img.shields.io/travis/7hens/okbinder)
 [![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
 
@@ -11,20 +11,17 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 ## Features
 
-| 特点               | AIDL                   | OkBinder                   |
-| ------------------ | ---------------------- | -------------------------- |
-| 实现方式           | AIDL 接口              | 纯 Java/Kotlin 接口        |
-| 并行调用           | 支持                   | 支持                       |
-| 多客户端并用       | 支持                   | 支持                       |
-| 获取方法的返回值   | 支持                   | 支持                       |
-| 非阻塞式调用       | 使用 oneway            | 返回值类型使用 void        |
-| 通过参数传值       | 使用 in                | 默认支持                   |
-| 通过参数取值       | 使用 out               | _不支持_                   |
-| 通过参数传值并取值 | 使用 inout             | _不支持_                   |
-| 通过参数回调       | 支持                   | 支持                       |
-| 异常日志           | 不完整                 | 完整                       |
-| IDE 智能提示     | 较少（需手动 import）  | 完整（因为是纯 Java 代码） |
-| 重构代价           | 麻烦（需要重新 build） | 简单（无需 build）         |
+| 特点               | AIDL                     | OkBinder                   |
+| ------------------ | ------------------------ | -------------------------- |
+| 获取方法的返回值   | 支持                     | 支持                       |
+| 非阻塞式调用       | 使用 oneway              | 返回值类型使用 void        |
+| 通过参数传值       | 使用 in                  | 默认支持                   |
+| 通过参数取值       | 使用 out                 | _不支持_                   |
+| 通过参数传值并取值 | 使用 inout               | _不支持_                   |
+| 通过参数回调       | 支持                     | 支持                       |
+| 异常日志           | _不完整_                 | 完整                       |
+| IDE 智能提示       | _较少（需手动 import）_  | 完整（因为是纯 Java 代码） |
+| 重构代价           | _麻烦（需要重新 build）_ | 简单（无需 build）         |
 
 ## Setting up the dependency
 
@@ -87,4 +84,4 @@ public class MyActivity extends Activity implements ServiceConnection {
 }
 ```
 
-> 最后的最后，OkBinder 真的很轻量哦，只有一个类，200+行代码。你完全可以直接把它（[OkBinder.java](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java)）拷贝到你的代码里。喜欢的话，记得 star 哦。
+> 最后的最后，OkBinder 真的很轻量哦，只有一个类。你完全可以直接把它（[OkBinder.java](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java)）拷贝到你的代码里。喜欢的话，记得 star 哦。

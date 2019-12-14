@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ public final class OkBinder {
     }
 
     public static Binder create(Object remoteObject) {
-        Class<?> okBinderInterface = getOkBinderInterface(remoteObject);
+        Class<?> okBinderInterface = getOkBinderInterface(remoteObject.getClass());
         require(okBinderInterface != null,
                 "remote object must implement only one interface with @OkBinder.Interface annotation");
         return new MyBinder(okBinderInterface, remoteObject);
@@ -55,6 +56,7 @@ public final class OkBinder {
                 Object result = null;
                 try {
                     data.writeInterfaceToken(serviceClass.getName());
+                    data.writeString(method.getName());
                     data.writeString(getMethodId(method));
                     if (args != null) {
                         for (Object arg : args) {
@@ -84,8 +86,9 @@ public final class OkBinder {
         return cls.isInterface() && cls.isAnnotationPresent(Interface.class);
     }
 
-    private static Class<?> getOkBinderInterface(Object object) {
-        Class<?>[] interfaces = object.getClass().getInterfaces();
+    private static Class<?> getOkBinderInterface(Class<?> cls) {
+        if (isOkBinderInterface(cls)) return cls;
+        Class<?>[] interfaces = cls.getInterfaces();
         List<Class<?>> okBinderInterfaces = new ArrayList<>();
         for (Class<?> anInterface : interfaces) {
             if (isOkBinderInterface(anInterface)) {
@@ -125,6 +128,10 @@ public final class OkBinder {
                 if (method.isBridge()) continue;
                 remoteMethods.put(getMethodId(method), method);
             }
+            for (Method method : Object.class.getMethods()) {
+                if (method.isBridge()) continue;
+                remoteMethods.put(getMethodId(method), method);
+            }
         }
 
         @Override
@@ -137,7 +144,11 @@ public final class OkBinder {
             if (code == IBinder.FIRST_CALL_TRANSACTION) {
                 try {
                     data.enforceInterface(descriptor);
+                    String methodName = data.readString();
                     Method remoteMethod = remoteMethods.get(data.readString());
+                    require(remoteMethod != null, "could not found method  " + descriptor + "#" + methodName);
+                    require(remoteMethod.getName().equals(methodName), "method name doest not match, " +
+                            "expect " + methodName + ", but actually " + remoteMethod.getName());
                     Class<?>[] paramTypes = remoteMethod.getParameterTypes();
                     Object result;
                     if (paramTypes == null || paramTypes.length == 0) {
@@ -176,24 +187,28 @@ public final class OkBinder {
     private final static class MyParcel {
         private static final int VAL_DEFAULT = 1;
         private static final int VAL_LIST = 2;
-        private static final int VAL_SPARSEARRAY = 3;
+        private static final int VAL_SPARSE_ARRAY = 3;
         private static final int VAL_MAP = 4;
-        private static final int VAL_OKBINDER = 5;
+        private static final int VAL_OK_BINDER = 5;
+        private static final int VAL_OBJECT_ARRAY = 6;
 
         static void writeValue(Parcel parcel, Object v) {
             if (v == null) {
                 parcel.writeInt(VAL_DEFAULT);
                 parcel.writeValue(null);
-            } else if (v instanceof List) {
+                return;
+            }
+            if (v instanceof List) {
                 parcel.writeInt(VAL_LIST);
                 List val = (List) v;
-                int size = val.size();
-                parcel.writeInt(size);
-                for (int i = 0; i < size; i++) {
-                    writeValue(parcel, val.get(i));
+                parcel.writeInt(val.size());
+                for (Object item : val) {
+                    writeValue(parcel, item);
                 }
-            } else if (v instanceof SparseArray) {
-                parcel.writeInt(VAL_SPARSEARRAY);
+                return;
+            }
+            if (v instanceof SparseArray) {
+                parcel.writeInt(VAL_SPARSE_ARRAY);
                 SparseArray val = (SparseArray) v;
                 int size = val.size();
                 parcel.writeInt(size);
@@ -201,7 +216,9 @@ public final class OkBinder {
                     parcel.writeInt(val.keyAt(i));
                     writeValue(parcel, val.valueAt(i));
                 }
-            } else if (v instanceof Map) {
+                return;
+            }
+            if (v instanceof Map) {
                 parcel.writeInt(VAL_MAP);
                 Map val = (Map) v;
                 Set<Map.Entry<Object, Object>> entries = val.entrySet();
@@ -210,17 +227,31 @@ public final class OkBinder {
                     writeValue(parcel, e.getKey());
                     writeValue(parcel, e.getValue());
                 }
-            } else {
-                Class<?> okBinderInterface = getOkBinderInterface(v);
-                if (okBinderInterface != null) {
-                    parcel.writeInt(VAL_OKBINDER);
-                    parcel.writeString(okBinderInterface.getName());
-                    parcel.writeValue(new MyBinder(okBinderInterface, v));
+                return;
+            }
+            Class<?> cls = v.getClass();
+            Class<?> okBinderInterface = getOkBinderInterface(cls);
+            if (okBinderInterface != null) {
+                parcel.writeInt(VAL_OK_BINDER);
+                parcel.writeString(okBinderInterface.getName());
+                parcel.writeValue(new MyBinder(okBinderInterface, v));
+                return;
+            }
+            if (cls.isArray()) {
+                Class<?> componentType = cls.getComponentType();
+                if (componentType == Object.class || isOkBinderInterface(componentType)) {
+                    parcel.writeInt(VAL_OBJECT_ARRAY);
+                    Object[] val = (Object[]) v;
+                    parcel.writeInt(val.length);
+                    parcel.writeString(cls.getName());
+                    for (Object o : val) {
+                        writeValue(parcel, o);
+                    }
                     return;
                 }
-                parcel.writeInt(VAL_DEFAULT);
-                parcel.writeValue(v);
             }
+            parcel.writeInt(VAL_DEFAULT);
+            parcel.writeValue(v);
         }
 
         static Object readValue(Parcel parcel, ClassLoader loader) throws ClassNotFoundException {
@@ -233,7 +264,7 @@ public final class OkBinder {
                     }
                     return outVal;
                 }
-                case VAL_SPARSEARRAY: {
+                case VAL_SPARSE_ARRAY: {
                     SparseArray outVal = new SparseArray<>();
                     for (int size = parcel.readInt(); size >= 0; size--) {
                         int key = parcel.readInt();
@@ -251,10 +282,20 @@ public final class OkBinder {
                     }
                     return outVal;
                 }
-                case VAL_OKBINDER: {
+                case VAL_OK_BINDER: {
                     Class<?> serviceClass = loader.loadClass(parcel.readString());
                     IBinder binder = (IBinder) parcel.readValue(loader);
                     return proxy(serviceClass, binder);
+                }
+                case VAL_OBJECT_ARRAY: {
+                    int size = parcel.readInt();
+                    Class<?> arrayType = loader.loadClass(parcel.readString());
+                    Object[] outVal = new Object[size];
+                    for (int i = 0; i < size; i++) {
+                        outVal[i] = readValue(parcel, loader);
+                    }
+                    if (arrayType == Object[].class) return outVal;
+                    return Arrays.copyOf(outVal, size, (Class<? extends Object[]>) arrayType);
                 }
                 default:
                     return parcel.readValue(loader);
