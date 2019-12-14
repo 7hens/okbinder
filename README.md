@@ -1,7 +1,7 @@
 # OkBinder
 
-[![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
-![Travis](https://img.shields.io/travis/7hens/okbinder)
+[![jitpack](https://jitpack.io/v/7hens/okbinder.svg)](https://jitpack.io/#7hens/okbinder)
+![travis](https://img.shields.io/travis/7hens/okbinder)
 [![license](https://img.shields.io/github/license/7hens/okbinder.svg)](https://github.com/7hens/okbinder/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/7hens/okbinder.svg?style=social)](https://github.com/7hens/okbinder)
 
@@ -25,10 +25,10 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 ## Setting up the dependency
 
-last_version: [![Download](https://api.bintray.com/packages/7hens/maven/okbinder/images/download.svg)](https://bintray.com/7hens/maven/okbinder/_latestVersion)
+last_version: [![jitpack](https://jitpack.io/v/7hens/okbinder.svg)](https://jitpack.io/#7hens/okbinder)
 
 ```groovy
-implementation 'cn.thens:okbinder:<last_version>'
+implementation 'com.github.thens:okbinder:<last_version>'
 ```
 
 ## Sample usage
