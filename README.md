@@ -13,6 +13,7 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 | 特点               | AIDL                     | OkBinder                   |
 | ------------------ | ------------------------ | -------------------------- |
+| 实现方式           | AIDL 接口              | 纯 Java/Kotlin 接口        |
 | 获取方法的返回值   | 支持                     | 支持                       |
 | 非阻塞式调用       | 使用 oneway              | 返回值类型使用 void        |
 | 通过参数传值       | 使用 in                  | 默认支持                   |
