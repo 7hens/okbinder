@@ -26,10 +26,8 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 ## Setting up the dependency
 
-last_version: [![jitpack](https://jitpack.io/v/7hens/okbinder.svg)](https://jitpack.io/#7hens/okbinder)
-
 ```groovy
-implementation 'com.github.7hens:okbinder:1.0'
+implementation 'com.github.7hens:okbinder:1.1'
 ```
 
 ## Sample usage

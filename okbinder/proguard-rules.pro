@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keepattributes *Annotation*
+-keep class cn.thens.okbinder.**
+-keep @cn.thens.okbinder.OkBinder$Interface class * { *; }
+-keep class * implements android.os.Parcelable { *; }
+-keep class * implements java.io.Serializable { *; }
