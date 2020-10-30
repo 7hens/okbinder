@@ -173,14 +173,14 @@ public final class OkBinder {
         }
     }
 
-    private final static class MyParcel {
+    public final static class MyParcel {
         private static final int VAL_DEFAULT = 1;
         private static final int VAL_LIST = 2;
         private static final int VAL_SPARSEARRAY = 3;
         private static final int VAL_MAP = 4;
         private static final int VAL_OKBINDER = 5;
 
-        static void writeValue(Parcel parcel, Object v) {
+        public static void writeValue(Parcel parcel, Object v) {
             if (v == null) {
                 parcel.writeInt(VAL_DEFAULT);
                 parcel.writeValue(null);
@@ -223,7 +223,7 @@ public final class OkBinder {
             }
         }
 
-        static Object readValue(Parcel parcel, ClassLoader loader) throws ClassNotFoundException {
+        public static Object readValue(Parcel parcel, ClassLoader loader) throws ClassNotFoundException {
             int type = parcel.readInt();
             switch (type) {
                 case VAL_LIST: {

@@ -14,11 +14,13 @@ import android.util.Log;
 import android.widget.Toast;
 
 import cn.thens.okbinder.OkBinder;
+import cn.thens.okbinder.OkBinderService;
 
 public class OkBinderSample {
     private static final String TAG = "@OkBinder";
 
     @OkBinder.Interface
+    @OkBinderService
     interface IRemoteService {
         String test();
 

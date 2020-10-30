@@ -1,3 +1,5 @@
+include ':okbinder-annotations'
+include ':okbinder-compiler'
 rootProject.name = 'OkBinder'
 
 include ':okbinder'
