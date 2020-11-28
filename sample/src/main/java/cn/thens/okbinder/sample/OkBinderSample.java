@@ -14,20 +14,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import cn.thens.okbinder.OkBinder;
-import cn.thens.okbinder.OkBinderService;
 
 public class OkBinderSample {
     private static final String TAG = "@OkBinder";
-
-    @OkBinder.Interface
-    @OkBinderService
-    interface IRemoteService {
-        String test();
-
-        void testError(Boolean aBoolean, Parcelable aParcelable);
-
-        IRemoteService testCallback(IRemoteService callback);
-    }
 
     public static class MainActivity extends Activity implements ServiceConnection {
         boolean isServiceConnected = false;
@@ -35,7 +24,7 @@ public class OkBinderSample {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
-            IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
+            IRemoteService remoteService = IRemoteServiceBinder.proxy(service);
             Log.d(TAG, "client: test");
             Log.d(TAG, "client: test => " + remoteService.test());
             try {
@@ -46,8 +35,8 @@ public class OkBinderSample {
             }
             try {
                 Log.d(TAG, "client: callback");
-                IRemoteService callback =remoteService.testCallback(createRemoteInterface("callback"));
-            } catch (Throwable  e) {
+                IRemoteService callback = remoteService.testCallback(createRemoteInterface("callback"));
+            } catch (Throwable e) {
                 Log.e(TAG, "client: callback error => \n" + Log.getStackTraceString(e));
             }
             Log.d(TAG, "client: end of onServiceConnected");
@@ -77,7 +66,7 @@ public class OkBinderSample {
     }
 
     public static abstract class BaseService extends Service {
-        private Binder okBinder = OkBinder.create(createRemoteInterface("service"));
+        private Binder okBinder = IRemoteServiceBinder.create(createRemoteInterface("service"));
 
         @Override
         public IBinder onBind(Intent intent) {

@@ -45,25 +45,29 @@ public class OkBinderProcessor extends AbstractProcessor {
 
         Elements elementUtils = processingEnv.getElementUtils();
 
-        Set<? extends Element> elements = env.getElementsAnnotatedWith(OkBinderService.class);
+        Set<? extends Element> elements = env.getElementsAnnotatedWith(AIDL.class);
         for (Element element : elements) {
-            TypeName serviceType = ClassName.get(element.asType());
+            TypeName cMyInterface = ClassName.get(element.asType());
             TypeElement typeElement = (TypeElement) element;
             System.out.println("## getBinaryName: " + elementUtils.getBinaryName(typeElement));
-            String serviceClassName = elementUtils.getBinaryName(typeElement).toString();
-            serviceClassName = serviceClassName.substring(serviceClassName.lastIndexOf(".") + 1) + "_Service";
+            String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
+            String myBinderClass = elementUtils.getBinaryName(typeElement).toString();
+            myBinderClass = myBinderClass.substring(myBinderClass.lastIndexOf(".") + 1) + "Binder";
+            TypeName cMyBinder = ClassName.get(packageName, myBinderClass);
+            TypeName cMyProxy = ClassName.get(packageName, myBinderClass, "Proxy");
 
             List<MethodSpec> proxyMethods = new ArrayList<>();
 
             MethodSpec constructor = MethodSpec.constructorBuilder()
-                    .addParameter(ParameterSpec.builder(serviceType, remoteObject).build())
+                    .addModifiers(Modifier.PRIVATE)
+                    .addParameter(ParameterSpec.builder(cMyInterface, remoteObject).build())
                     .addStatement("this.$L = $L", remoteObject, remoteObject)
                     .addStatement("attachInterface(this, $L)", descriptor)
                     .build();
 
             FieldSpec descriptorField = FieldSpec.builder(cString, descriptor)
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                    .initializer("$S", serviceType)
+                    .initializer("$S", cMyInterface)
                     .build();
 
             MethodSpec asBinderMethod = MethodSpec.methodBuilder("asBinder")
@@ -72,7 +76,7 @@ public class OkBinderProcessor extends AbstractProcessor {
                     .addStatement("return this")
                     .build();
 
-            CodeBlock.Builder transactionCodes = CodeBlock.builder()
+            CodeBlock.Builder onTransactCodes = CodeBlock.builder()
                     .beginControlFlow("try")
                     .addStatement("data.enforceInterface($L)", descriptor)
                     .addStatement("$T $L = $L.getClass().getClassLoader()",
@@ -81,7 +85,7 @@ public class OkBinderProcessor extends AbstractProcessor {
 
             int methodCount = 0;
             List<FieldSpec> transactionFields = new ArrayList<>();
-            transactionCodes.beginControlFlow("switch (code)");
+            onTransactCodes.beginControlFlow("switch (code)");
 
             for (Element member : elementUtils.getAllMembers(typeElement)) {
                 System.out.println("## member: " + member + ", " + member.getClass());
@@ -99,19 +103,19 @@ public class OkBinderProcessor extends AbstractProcessor {
                     ExecutableElement methodMember = (ExecutableElement) member;
                     String methodName = methodMember.getSimpleName().toString();
 
-                    String transactionCode = "TRANSACTION_" + methodCount + "_" + methodName;
+                    String transactionCode = methodName + "_" + "T" + methodCount;
                     transactionFields.add(FieldSpec.builder(TypeName.INT, transactionCode)
                             .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                             .initializer("IBinder.FIRST_CALL_TRANSACTION + " + methodCount)
                             .build());
 
-                    transactionCodes.beginControlFlow("case $L:", transactionCode);
+                    onTransactCodes.beginControlFlow("case $L:", transactionCode);
 
                     CodeBlock.Builder proxyMethodCodes = CodeBlock.builder()
                             .addStatement("$T data = $T.obtain()", cParcel, cParcel)
                             .addStatement("$T reply = $T.obtain()", cParcel, cParcel)
                             .addStatement("$T result = null", TypeName.OBJECT)
-                            .addStatement("$T classLoader = $T.class.getClassLoader()", cClassLoader, serviceType)
+                            .addStatement("$T classLoader = $T.class.getClassLoader()", cClassLoader, cMyInterface)
                             .beginControlFlow("try")
                             .addStatement("data.writeInterfaceToken($L)", descriptor);
 
@@ -120,7 +124,7 @@ public class OkBinderProcessor extends AbstractProcessor {
                     for (VariableElement parameter : methodMember.getParameters()) {
                         TypeName cParamType = ClassName.get(parameter.asType());
                         String argName = "arg" + args.size();
-                        transactionCodes.addStatement("$T $L = ($T) $T.readValue(data, $L)",
+                        onTransactCodes.addStatement("$T $L = ($T) $T.readValue(data, $L)",
                                 cParamType, argName, cParamType, cMyParcel, classLoader);
                         args.add(CodeBlock.of("$L", argName));
                         proxyMethodParams.add(ParameterSpec.builder(cParamType, argName).build());
@@ -134,11 +138,11 @@ public class OkBinderProcessor extends AbstractProcessor {
                     CodeBlock proxyReturnCode;
                     TypeName returnType = ClassName.get(methodMember.getReturnType());
                     if (TypeName.VOID.equals(returnType)) {
-                        transactionCodes.addStatement(invokeMethod);
+                        onTransactCodes.addStatement(invokeMethod);
                         transactFlag = CodeBlock.of("$T.FLAG_ONEWAY", cIBinder);
                         proxyReturnCode = CodeBlock.of("");
                     } else {
-                        transactionCodes.addStatement("$L = $L", result, invokeMethod);
+                        onTransactCodes.addStatement("$L = $L", result, invokeMethod);
                         transactFlag = CodeBlock.of("0");
                         proxyReturnCode = CodeBlock.of("($T) result", returnType);
                     }
@@ -157,7 +161,7 @@ public class OkBinderProcessor extends AbstractProcessor {
                             .endControlFlow()
                             .addStatement("return $L", proxyReturnCode);
 
-                    transactionCodes
+                    onTransactCodes
                             .addStatement("break")
                             .endControlFlow(); // end case x:
 
@@ -173,7 +177,7 @@ public class OkBinderProcessor extends AbstractProcessor {
                 }
             }
 
-            transactionCodes.endControlFlow() // end switch (code)
+            onTransactCodes.endControlFlow() // end switch (code)
                     .beginControlFlow("if ($L != null)", reply)
                     .addStatement("$L.writeNoException()", reply)
                     .beginControlFlow("if ($L != null)", result)
@@ -189,6 +193,7 @@ public class OkBinderProcessor extends AbstractProcessor {
                     .addStatement("throw remoteException")
                     .endControlFlow();
 
+            // onTransaction method of Binder class
             MethodSpec onTransactMethod = MethodSpec.methodBuilder("onTransact")
                     .addModifiers(Modifier.PUBLIC)
                     .addParameter(TypeName.INT, "code")
@@ -197,13 +202,14 @@ public class OkBinderProcessor extends AbstractProcessor {
                     .addParameter(TypeName.INT, "flags")
                     .returns(TypeName.BOOLEAN)
                     .addException(cRemoteException)
-                    .addCode(transactionCodes.build())
+                    .addCode(onTransactCodes.build())
                     .addStatement("return true")
                     .build();
 
+            // Proxy class as inner class of Binder class
             TypeSpec proxyClassSpec = TypeSpec.classBuilder("Proxy")
                     .addModifiers(Modifier.STATIC)
-                    .addSuperinterface(serviceType)
+                    .addSuperinterface(cMyInterface)
                     .addField(FieldSpec.builder(cIBinder, "binder", Modifier.PRIVATE, Modifier.FINAL).build())
                     .addMethod(MethodSpec.constructorBuilder()
                             .addParameter(ParameterSpec.builder(cIBinder, "binder").build())
@@ -212,22 +218,34 @@ public class OkBinderProcessor extends AbstractProcessor {
                     .addMethods(proxyMethods)
                     .build();
 
-            TypeSpec serviceClassSpec = TypeSpec.classBuilder(serviceClassName)
+            // AIDL Binder class
+            TypeSpec myBinderClassSpec = TypeSpec.classBuilder(myBinderClass)
+                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     .superclass(cBinder)
                     .addSuperinterface(cIInterface)
                     .addType(proxyClassSpec)
                     .addField(descriptorField)
                     .addFields(transactionFields)
-                    .addField(serviceType, remoteObject, Modifier.PRIVATE, Modifier.FINAL)
+                    .addField(cMyInterface, remoteObject, Modifier.PRIVATE, Modifier.FINAL)
                     .addMethod(constructor)
                     .addMethod(asBinderMethod)
                     .addMethod(onTransactMethod)
+                    .addMethod(MethodSpec.methodBuilder("create")
+                            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                            .addParameter(ParameterSpec.builder(cMyInterface, remoteObject).build())
+                            .returns(cBinder)
+                            .addStatement("return new $T($L)", cMyBinder, remoteObject)
+                            .build())
+                    .addMethod(MethodSpec.methodBuilder("proxy")
+                            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                            .addParameter(ParameterSpec.builder(cIBinder, binder).build())
+                            .returns(cMyInterface)
+                            .addStatement("return new $T($L)", cMyProxy, binder)
+                            .build())
                     .build();
 
-
-            String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
             try {
-                JavaFile.builder(packageName, serviceClassSpec)
+                JavaFile.builder(packageName, myBinderClassSpec)
                         .indent("    ")
                         .build()
                         .writeTo(processingEnv.getFiler());
@@ -240,6 +258,6 @@ public class OkBinderProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Collections.singleton(OkBinderService.class.getCanonicalName());
+        return Collections.singleton(AIDL.class.getCanonicalName());
     }
 }
