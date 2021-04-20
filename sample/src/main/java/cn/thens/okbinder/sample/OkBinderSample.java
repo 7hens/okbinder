@@ -13,6 +13,8 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
+
 import cn.thens.okbinder.OkBinder;
 
 public class OkBinderSample {

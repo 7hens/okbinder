@@ -34,7 +34,7 @@ public class OkBinderProcessor extends AbstractProcessor {
         ClassName cRemoteException = ClassName.get(binderPackageName, "RemoteException");
         ClassName cClassLoader = ClassName.get("java.lang", "ClassLoader");
         ClassName cOkBinder = ClassName.get("cn.thens.okbinder", "OkBinder");
-        ClassName cMyParcel = cOkBinder.nestedClass("MyParcel");
+        ClassName cMyParcel = ClassName.get("cn.thens.okbinder", "OkBinderParcel");
         ClassName cString = ClassName.get(String.class);
         String remoteObject = "remoteObject";
         String descriptor = "DESCRIPTOR";

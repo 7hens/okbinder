@@ -11,6 +11,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -27,7 +28,7 @@ public class MainActivity extends Activity implements ServiceConnection {
     public void onServiceConnected(ComponentName name, IBinder service) {
         Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
 
-        OkBinderInterface remoteService = OkBinder.proxy(OkBinderInterface.class, service);
+        OkBinderInterface remoteService = OkBinder.proxy(service, OkBinderInterface.class);
         try {
             remoteService.testError(false, ComponentName.unflattenFromString("a.b/.c"));
         } catch (Exception e) {
@@ -53,6 +54,12 @@ public class MainActivity extends Activity implements ServiceConnection {
         setContentView(R.layout.activity_main);
         findViewById(R.id.vTestLocalService).setOnClickListener(v -> rebindService(LocalService.class));
         findViewById(R.id.vTestRemoteService).setOnClickListener(v -> rebindService(RemoteService.class));
+
+
+        for (Method method : Object.class.getMethods()) {
+            if (method.isBridge()) continue;
+            Log.e("@@", OkBinder.getMethodId(method));
+        }
     }
 
     private void rebindService(Class<?> serviceClass) {
