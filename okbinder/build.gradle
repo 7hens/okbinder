@@ -1,12 +1,15 @@
 apply plugin: 'com.android.library'
-apply from: '../gradle/publish.gradle'
+apply plugin: 'maven-publish'
+
+group = GROUP_ID
+version = VERSION
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -24,7 +27,7 @@ android {
 dependencies {
     api project(':okbinder-annotations')
 
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
