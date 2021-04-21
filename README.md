@@ -11,18 +11,21 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 ## Features
 
-| 特点               | AIDL                     | OkBinder                   |
-| ------------------ | ------------------------ | -------------------------- |
-| 实现方式           | AIDL 接口              | 纯 Java/Kotlin 接口        |
-| 获取方法的返回值   | 支持                     | 支持                       |
-| 非阻塞式调用       | 使用 oneway              | 返回值类型使用 void        |
-| 通过参数传值       | 使用 in                  | 默认支持                   |
-| 通过参数取值       | 使用 out                 | _不支持_                   |
-| 通过参数传值并取值 | 使用 inout               | _不支持_                   |
-| 通过参数回调       | 支持                     | 支持                       |
-| 异常日志           | _不完整_                 | 完整                       |
-| IDE 智能提示       | _较少（需手动 import）_  | 完整（因为是纯 Java 代码） |
-| 重构代价           | _麻烦（需要重新 build）_ | 简单（无需 build）         |
+| 特点               | AIDL                       | OkBinder                     |
+| ------------------ | -------------------------- | ---------------------------- |
+| 实现方式           | ✓ AIDL 接口                | ✓ 纯 Java/Kotlin 接口        |
+| 获取方法的返回值   | ✓ 支持                     | ✓ 支持                       |
+| 非阻塞式调用       | ✓ 使用 oneway              | ✓ 返回值类型使用 void        |
+| 通过参数传值       | ✓ 使用 in                  | ✓ 默认支持                   |
+| 通过参数取值       | ✓ 使用 out                 | ✕ _不支持_                   |
+| 通过参数传值并取值 | ✓ 使用 inout               | ✕ _不支持_                   |
+| 通过参数回调       | ✓ 支持                     | ✓ 支持                       |
+| 打乱原有方法顺序   | ✕ _不支持_                 | ✓ 支持                       |
+| 异常日志           | ✕ _不完整_                 | ✓ 完整                       |
+| IDE 智能提示       | ✕ _较少（需手动 import）_  | ✓ 完整（因为是纯 Java 代码） |
+| 重构代价           | ✕ _麻烦（需要重新 build）_ | ✓ 简单（无需 build）         |
+
+> OkBinder 从 2.0 开始支持编译时注解，优化了远程方法的调用。
 
 ## Setting up the dependency
 
@@ -74,7 +77,7 @@ _Finally, you can use the client's IBinder to create a proxy object for the serv
 public class MyActivity extends Activity implements ServiceConnection {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        IRemoteService remoteService = OkBinder.proxy(service, IRemoteService.class);
+        IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
         remoteService.doSomething(0, remoteService);
     }
 
