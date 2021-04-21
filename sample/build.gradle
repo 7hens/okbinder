@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 30
     defaultConfig {
-        applicationId "cn.thens.okbinder.sample"
+        applicationId "cn.thens.okbinder2.sample"
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 1
@@ -26,6 +26,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':okbinder')
     annotationProcessor project(':okbinder-compiler')
+
+//    implementation("cn.thens.okbinder:okbinder:2.0")
+//    annotationProcessor("cn.thens.okbinder:okbinder-compiler:2.0")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="cn.thens.okbinder.sample">
+          package="cn.thens.okbinder2.sample">
 
     <application
             android:allowBackup="true"
@@ -9,7 +9,7 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name="cn.thens.okbinder2.sample.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -17,8 +17,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".LocalService"/>
-        <service android:name=".RemoteService"
+        <service android:name="cn.thens.okbinder2.sample.LocalService"/>
+        <service android:name="cn.thens.okbinder2.sample.RemoteService"
                  android:process=":remote"/>
     </application>
 

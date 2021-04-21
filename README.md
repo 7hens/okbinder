@@ -27,17 +27,20 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 ## Setting up the dependency
 
 ```groovy
-implementation 'com.github.7hens:okbinder:1.1'
+implementation("com.github.7hens.okbinder:okbinder:2.0")
+
+// The following is optional
+annotationProcessor("com.github.7hens.okbinder:okbinder-compiler:2.0")
 ```
 
 ## Sample usage
 
-首先，你需要定义一个用于 IPC 的服务接口。这个接口的功能类似于 AIDL，但不同的是，这是一个纯 Java 的接口，并且需要使用 `@OkBinder.Interface` 注解。
+首先，你需要定义一个用于 IPC 的服务接口。这个接口的功能类似于 AIDL，但不同的是，这是一个纯 Java 的接口，并且需要使用 `@AIDL` 注解。
 
-_First, you need to define a service interface for IPC. Similar to AIDL, but the difference is that this is a pure Java interface and needs to be annotated with `@OkBinder.Interface`._
+_First, you need to define a service interface for IPC. Similar to AIDL, but the difference is that this is a pure Java interface and needs to be annotated with `@AIDL`._
 
 ```java
-@OkBinder.Interface
+@AIDL
 public interface IRemoteService {
     void doSomething(int aInt, IRemoteService callback);
 }
@@ -71,7 +74,7 @@ _Finally, you can use the client's IBinder to create a proxy object for the serv
 public class MyActivity extends Activity implements ServiceConnection {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        IRemoteService remoteService = OkBinder.proxy(IRemoteService.java, service);
+        IRemoteService remoteService = OkBinder.proxy(service, IRemoteService.class);
         remoteService.doSomething(0, remoteService);
     }
 
@@ -82,5 +85,3 @@ public class MyActivity extends Activity implements ServiceConnection {
     }
 }
 ```
-
-> 最后的最后，OkBinder 真的很轻量哦，只有一个类。你完全可以直接把它（[OkBinder.java](https://github.com/7hens/okbinder/blob/master/okbinder/src/main/java/cn/thens/okbinder/OkBinder.java)）拷贝到你的代码里。喜欢的话，记得 star 哦。

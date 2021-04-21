@@ -1,0 +1,33 @@
+//apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+group = GROUP_ID
+version = VERSION
+
+// for android library
+if (pluginManager.hasPlugin("com.android.library")) {
+    afterEvaluate {
+        def variant = android.libraryVariants.find { !it.buildType.debuggable }
+        publishing {
+            publications {
+                aar(MavenPublication) {
+//                    artifact variant.outputs.first().outputFile
+                    // gradle 3.6 以后可以使用
+                     from components.release
+                }
+            }
+        }
+        tasks.publishAarPublicationToMavenLocal.dependsOn variant.assembleProvider.get()
+    }
+} else {
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+        publications {
+            testing(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}

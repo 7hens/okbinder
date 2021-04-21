@@ -1,8 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
-
-group = GROUP_ID
-version = VERSION
+apply from: "$rootDir/publish.gradle"
 
 android {
     compileSdkVersion 30
@@ -22,11 +19,12 @@ android {
         }
     }
 
+    libraryVariants.all {
+        it.generateBuildConfigProvider.get().enabled = false
+    }
 }
 
 dependencies {
-    api project(':okbinder-annotations')
-
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
