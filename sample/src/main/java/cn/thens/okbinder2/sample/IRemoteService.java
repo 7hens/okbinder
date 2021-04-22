@@ -20,13 +20,17 @@ interface IRemoteService {
 
     IRemoteService testCallback(IRemoteService callback);
 
-    IRemoteService testList(List<IRemoteService> list);
+    void testList(List<IRemoteService> list);
 
-    IRemoteService testSparseArray(SparseArray<IRemoteService> sparseArray);
+    void testSparseArray(SparseArray<IRemoteService> sparseArray);
 
-    IRemoteService testMap(Map<String, IRemoteService> map);
+    void testMap(Map<String, IRemoteService> map);
 
-    IRemoteService testArray(IRemoteService[] array);
+    void testAidlArray(IRemoteService[] array);
 
-    IRemoteService testObjectArray(Object[] array);
+    void testObjectArray(Object[] array);
+
+    void testPrimitiveArray(int[] array);
+
+    void testPrimitiveArray2(int[][] array);
 }

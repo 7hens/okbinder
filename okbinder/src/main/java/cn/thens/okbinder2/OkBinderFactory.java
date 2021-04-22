@@ -57,7 +57,7 @@ public interface OkBinderFactory {
                     int argCount = data.readInt();
                     Object[] args = new Object[argCount];
                     for (int i = 0; i < argCount; i++) {
-                        args[i] = OkBinderParcel.readValue(data, classLoader);
+                        args[i] = OkBinderParcel.read(data, classLoader);
                     }
                     Function function = functions.get(functionId);
                     if (function == null) {
@@ -68,7 +68,7 @@ public interface OkBinderFactory {
                         reply.writeNoException();
                         if (result != null) {
                             reply.writeInt(1);
-                            OkBinderParcel.writeValue(reply, result);
+                            OkBinderParcel.write(reply, result);
                         } else {
                             reply.writeInt(0);
                         }
@@ -110,7 +110,7 @@ public interface OkBinderFactory {
                 if (args != null) {
                     data.writeInt(args.length);
                     for (Object arg : args) {
-                        OkBinderParcel.writeValue(data, arg);
+                        OkBinderParcel.write(data, arg);
                     }
                 } else {
                     data.writeInt(0);
@@ -118,7 +118,7 @@ public interface OkBinderFactory {
                 binder.transact(Binder.FIRST_CALL_TRANSACTION, data, reply, flags);
                 reply.readException();
                 if (reply.readInt() != 0) {
-                    result = OkBinderParcel.readValue(reply, classLoader);
+                    result = OkBinderParcel.read(reply, classLoader);
                 }
             } catch (Throwable e) {
                 throw ErrorUtils.wrap(e);

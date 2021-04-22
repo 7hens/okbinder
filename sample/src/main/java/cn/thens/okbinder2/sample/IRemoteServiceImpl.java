@@ -39,33 +39,38 @@ public final class IRemoteServiceImpl implements IRemoteService {
     }
 
     @Override
-    public IRemoteService testList(List<IRemoteService> list) {
+    public void testList(List<IRemoteService> list) {
         Log.d(TAG, tag + ".testList(" + list + ") ");
-        return null;
     }
 
     @Override
-    public IRemoteService testSparseArray(SparseArray<IRemoteService> sparseArray) {
+    public void testSparseArray(SparseArray<IRemoteService> sparseArray) {
         Log.d(TAG, tag + ".testSparseArray(" + sparseArray + ") ");
-        return null;
     }
 
     @Override
-    public IRemoteService testMap(Map<String, IRemoteService> map) {
+    public void testMap(Map<String, IRemoteService> map) {
         Log.d(TAG, tag + ".testMap(" + map + ") ");
-        return null;
     }
 
     @Override
-    public IRemoteService testArray(IRemoteService[] array) {
-        Log.d(TAG, tag + ".testArray(" + Arrays.toString(array) + ") ");
-        return null;
+    public void testAidlArray(IRemoteService[] array) {
+        Log.d(TAG, tag + ".testAidlArray(" + Arrays.toString(array) + ") ");
     }
 
     @Override
-    public IRemoteService testObjectArray(Object[] array) {
+    public void testObjectArray(Object[] array) {
         Log.d(TAG, tag + ".testObjectArray(" + Arrays.toString(array) + ") ");
-        return null;
+    }
+
+    @Override
+    public void testPrimitiveArray(int[] array) {
+        Log.d(TAG, tag + ".testPrimitiveArray(" + Arrays.toString(array) + ") ");
+    }
+
+    @Override
+    public void testPrimitiveArray2(int[][] array) {
+        Log.d(TAG, tag + ".testPrimitiveArray2(" + Arrays.toString(array[0]) + ") ");
     }
 
     @Override

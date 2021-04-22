@@ -15,12 +15,12 @@ import java.util.Set;
 public final class OkBinderParcel {
     private static final int VAL_DEFAULT = 1;
     private static final int VAL_LIST = 2;
-    private static final int VAL_SPARSEARRAY = 3;
+    private static final int VAL_SPARSE_ARRAY = 3;
     private static final int VAL_MAP = 4;
-    private static final int VAL_OKBINDER = 5;
+    private static final int VAL_OK_BINDER = 5;
     private static final int VAL_ARRAY = 6;
 
-    public static void writeValue(Parcel parcel, Object v) {
+    public static void write(Parcel parcel, Object v) {
         if (v == null) {
             parcel.writeInt(VAL_DEFAULT);
             parcel.writeValue(null);
@@ -29,16 +29,16 @@ public final class OkBinderParcel {
             List val = (List) v;
             parcel.writeInt(val.size());
             for (Object o : val) {
-                writeValue(parcel, o);
+                write(parcel, o);
             }
         } else if (v instanceof SparseArray) {
-            parcel.writeInt(VAL_SPARSEARRAY);
+            parcel.writeInt(VAL_SPARSE_ARRAY);
             SparseArray val = (SparseArray) v;
             int size = val.size();
             parcel.writeInt(size);
             for (int i = 0; i < size; i++) {
                 parcel.writeInt(val.keyAt(i));
-                writeValue(parcel, val.valueAt(i));
+                write(parcel, val.valueAt(i));
             }
         } else if (v instanceof Map) {
             parcel.writeInt(VAL_MAP);
@@ -46,22 +46,28 @@ public final class OkBinderParcel {
             Set<Map.Entry<Object, Object>> entries = val.entrySet();
             parcel.writeInt(entries.size());
             for (Map.Entry<Object, Object> e : entries) {
-                writeValue(parcel, e.getKey());
-                writeValue(parcel, e.getValue());
+                write(parcel, e.getKey());
+                write(parcel, e.getValue());
             }
         } else if (v.getClass().isArray()) {
             parcel.writeInt(VAL_ARRAY);
+            Class<?> componentType = v.getClass().getComponentType();
+            //noinspection ConstantConditions
+            if (componentType.isPrimitive()) {
+                parcel.writeString("");
+                parcel.writeValue(v);
+                return;
+            }
+            parcel.writeString(componentType.getName());
             Object[] val = (Object[]) v;
             parcel.writeInt(val.length);
-            //noinspection ConstantConditions
-            parcel.writeString(v.getClass().getComponentType().getName());
             for (Object o : val) {
-                writeValue(parcel, o);
+                write(parcel, o);
             }
         } else {
             Class<?> okBinderInterface = OkBinder.getOkBinderInterface(v);
             if (okBinderInterface != null) {
-                parcel.writeInt(VAL_OKBINDER);
+                parcel.writeInt(VAL_OK_BINDER);
                 parcel.writeString(okBinderInterface.getName());
                 parcel.writeValue(OkBinder.create((Class<Object>) okBinderInterface, v));
                 return;
@@ -71,46 +77,53 @@ public final class OkBinderParcel {
         }
     }
 
-    public static Object readValue(Parcel parcel, ClassLoader loader) throws ClassNotFoundException {
+    public static Object read(Parcel parcel, ClassLoader loader) throws ClassNotFoundException {
         int type = parcel.readInt();
         switch (type) {
             case VAL_LIST: {
                 List outVal = new ArrayList();
-                for (int size = parcel.readInt() - 1; size >= 0; size--) {
-                    outVal.add(readValue(parcel, loader));
+                int size = parcel.readInt();
+                for (int i = 0; i < size; i++) {
+                    outVal.add(read(parcel, loader));
                 }
                 return outVal;
             }
-            case VAL_SPARSEARRAY: {
+            case VAL_SPARSE_ARRAY: {
                 SparseArray outVal = new SparseArray<>();
-                for (int size = parcel.readInt() - 1; size >= 0; size--) {
+                int size = parcel.readInt();
+                for (int i = 0; i < size; i++) {
                     int key = parcel.readInt();
-                    Object value = readValue(parcel, loader);
+                    Object value = read(parcel, loader);
                     outVal.put(key, value);
                 }
                 return outVal;
             }
             case VAL_MAP: {
                 Map outVal = new HashMap();
-                for (int size = parcel.readInt() - 1; size >= 0; size--) {
-                    Object key = readValue(parcel, loader);
-                    Object value = readValue(parcel, loader);
+                int size = parcel.readInt();
+                for (int i = 0; i < size; i++) {
+                    Object key = read(parcel, loader);
+                    Object value = read(parcel, loader);
                     outVal.put(key, value);
                 }
                 return outVal;
             }
-            case VAL_OKBINDER: {
+            case VAL_OK_BINDER: {
                 Class<?> serviceClass = loader.loadClass(parcel.readString());
                 IBinder binder = (IBinder) parcel.readValue(loader);
                 return OkBinder.proxy(serviceClass, binder);
             }
             case VAL_ARRAY: {
-                int length = parcel.readInt();
                 String componentName = parcel.readString();
+                boolean isPrimitiveComponent = "".equals(componentName);
+                if (isPrimitiveComponent) {
+                    return parcel.readValue(loader);
+                }
                 Class<?> componentClass = loader.loadClass(componentName);
-                Object[] outputVal = (Object[]) Array.newInstance(componentClass, length);
-                for (int i = length - 1; i >= 0; i--) {
-                    outputVal[i] = readValue(parcel, loader);
+                int size = parcel.readInt();
+                Object[] outputVal = (Object[]) Array.newInstance(componentClass, size);
+                for (int i = 0; i < size; i++) {
+                    outputVal[i] = read(parcel, loader);
                 }
                 return outputVal;
             }
@@ -118,5 +131,4 @@ public final class OkBinderParcel {
                 return parcel.readValue(loader);
         }
     }
-
 }

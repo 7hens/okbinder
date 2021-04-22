@@ -43,8 +43,11 @@ public class MainActivity extends Activity implements ServiceConnection {
         remoteService.testList(Arrays.asList(callback, callback2));
         remoteService.testSparseArray(sparseArray);
         remoteService.testMap(Collections.singletonMap("mapKey", callback));
-        remoteService.testArray(new IRemoteService[]{callback, callback2});
+        remoteService.testAidlArray(new IRemoteService[]{callback, callback2});
         remoteService.testObjectArray(new IRemoteService[]{callback, callback2});
+        int[] intArray = {1, 2};
+        remoteService.testPrimitiveArray(intArray);
+        remoteService.testPrimitiveArray2(new int[][]{intArray, intArray});
     }
 
     @Override
