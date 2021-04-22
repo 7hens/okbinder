@@ -15,7 +15,6 @@ import java.util.Map;
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
     private static final String TAG = "@OkBinder";
-    static final String PROTO = "OkBinder2.0";
 
     public static Binder create(Object remoteObject) {
         Class<?> okBinderInterface = getOkBinderInterface(remoteObject);

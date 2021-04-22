@@ -53,10 +53,14 @@ public interface OkBinderFactory {
             if (code == IBinder.FIRST_CALL_TRANSACTION) {
                 try {
                     data.enforceInterface(descriptor);
-                    String proto = data.readString();
-                    if (!OkBinder.PROTO.equals(proto)) {
-                        throw new IllegalArgumentException("The expected proto is " +
-                                OkBinder.PROTO + ", but it is actually " + proto);
+                    int magicNumber = data.readInt();
+                    if (magicNumber != OkBinderVersion.MAGIC_NUMBER) {
+                        throw new IllegalArgumentException("Mismatched magic number " + magicNumber);
+                    }
+                    int version = data.readInt();
+                    if (!OkBinderVersion.isSupported(version)) {
+                        throw new IllegalArgumentException("Unsupported version " + version +
+                                ", the min supported is " + OkBinderVersion.minSupported());
                     }
                     String functionId = data.readString();
                     int argCount = data.readInt();
@@ -111,7 +115,8 @@ public interface OkBinderFactory {
             Object result = null;
             try {
                 data.writeInterfaceToken(descriptor);
-                data.writeString(OkBinder.PROTO);
+                data.writeInt(OkBinderVersion.MAGIC_NUMBER);
+                data.writeInt(OkBinderVersion.current());
                 data.writeString(methodId);
                 if (args != null) {
                     data.writeInt(args.length);
