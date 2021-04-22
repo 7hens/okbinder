@@ -2,17 +2,9 @@ package cn.thens.okbinder2;
 
 import org.junit.Test;
 
-public class ClassTest {
-    @SuppressWarnings("ConstantConditions")
-    @Test
-    public void loadPrimitiveType() throws Throwable {
-        ClassLoader classLoader = getClass().getClassLoader();
-        String name = int.class.getName();
-        System.out.println("name: " + name);
-        System.out.println("forName: " + Class.forName(name));
-        System.out.println("loadClass: " + classLoader.loadClass(name));
-    }
+import static org.junit.Assert.*;
 
+public class ClassTest {
     @Test
     public void testPrimitiveType() throws Throwable {
         testClass(int.class);

@@ -15,11 +15,12 @@ import java.util.Map;
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
     private static final String TAG = "@OkBinder";
+    static final String PROTO = "OkBinder2.0";
 
     public static Binder create(Object remoteObject) {
         Class<?> okBinderInterface = getOkBinderInterface(remoteObject);
         require(okBinderInterface != null,
-                "remote object must implement only one interface with @AIDL annotation");
+                "Remote object must implement only one interface with @AIDL annotation");
         return create((Class<Object>) okBinderInterface, remoteObject);
     }
 
@@ -39,7 +40,7 @@ public final class OkBinder {
 
     private static OkBinderFactory getFactory(Class<?> serviceClass) {
         require(isOkBinderInterface(serviceClass),
-                "service class must be an interface with @AIDL annotation");
+                "Service class must be an interface with @AIDL annotation");
         OkBinderFactory factory = factories.get(serviceClass);
         if (factory != null) {
             return factory;

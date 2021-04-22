@@ -33,18 +33,18 @@ public class MainActivity extends Activity implements ServiceConnection {
         } catch (Exception e) {
             Log.e(TAG, "MainActivity: testError => \n" + Log.getStackTraceString(e));
         }
-        IRemoteService callback = new IRemoteServiceImpl("Callback");
-        IRemoteService callback2 = new IRemoteServiceImpl("Callback2");
+        IRemoteService callback1 = new IRemoteServiceImpl("MainActivity1");
+        IRemoteService callback2 = new IRemoteServiceImpl("MainActivity2");
         SparseArray<IRemoteService> sparseArray = new SparseArray<>();
-        sparseArray.put(1, callback);
+        sparseArray.put(1, callback1);
         sparseArray.put(2, callback2);
 
-        remoteService.testCallback(callback);
-        remoteService.testList(Arrays.asList(callback, callback2));
+        remoteService.testCallback(callback1);
+        remoteService.testList(Arrays.asList(callback1, callback2));
         remoteService.testSparseArray(sparseArray);
-        remoteService.testMap(Collections.singletonMap("mapKey", callback));
-        remoteService.testAidlArray(new IRemoteService[]{callback, callback2});
-        remoteService.testObjectArray(new IRemoteService[]{callback, callback2});
+        remoteService.testMap(Collections.singletonMap("mapKey", callback1));
+        remoteService.testAidlArray(new IRemoteService[]{callback1, callback2});
+        remoteService.testObjectArray(new IRemoteService[]{callback1, callback2});
         int[] intArray = {1, 2};
         remoteService.testPrimitiveArray(intArray);
         remoteService.testPrimitiveArray2(new int[][]{intArray, intArray});

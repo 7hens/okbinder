@@ -53,6 +53,11 @@ public interface OkBinderFactory {
             if (code == IBinder.FIRST_CALL_TRANSACTION) {
                 try {
                     data.enforceInterface(descriptor);
+                    String proto = data.readString();
+                    if (!OkBinder.PROTO.equals(proto)) {
+                        throw new IllegalArgumentException("The expected proto is " +
+                                OkBinder.PROTO + ", but it is actually " + proto);
+                    }
                     String functionId = data.readString();
                     int argCount = data.readInt();
                     Object[] args = new Object[argCount];
@@ -106,6 +111,7 @@ public interface OkBinderFactory {
             Object result = null;
             try {
                 data.writeInterfaceToken(descriptor);
+                data.writeString(OkBinder.PROTO);
                 data.writeString(methodId);
                 if (args != null) {
                     data.writeInt(args.length);

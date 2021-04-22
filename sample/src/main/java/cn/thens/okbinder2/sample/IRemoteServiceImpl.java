@@ -19,62 +19,67 @@ public final class IRemoteServiceImpl implements IRemoteService {
         this.tag = tag;
     }
 
+    private String log(String text) {
+        String msg = toString() + "." + text;
+        Log.d(TAG, msg);
+        return msg;
+    }
+    
     @Override
     public String test() {
-        Log.d(TAG, tag + ".test()");
-        return tag + ".test";
+        return log("test()");
     }
 
     @Override
     public void testError(Boolean aBoolean, Parcelable aParcelable) {
-        Log.d(TAG, tag + ".testError(" + aBoolean + ", " + aParcelable + ")");
+        log("testError(" + aBoolean + ", " + aParcelable + ")");
         throw new NullPointerException();
     }
 
     @Override
     public IRemoteService testCallback(IRemoteService callback) {
-        Log.d(TAG, tag + ".testCallback(" + callback + ") ");
+        log("testCallback(" + callback + ") ");
         callback.test();
         return callback;
     }
 
     @Override
     public void testList(List<IRemoteService> list) {
-        Log.d(TAG, tag + ".testList(" + list + ") ");
+        log("testList(" + list + ") ");
     }
 
     @Override
     public void testSparseArray(SparseArray<IRemoteService> sparseArray) {
-        Log.d(TAG, tag + ".testSparseArray(" + sparseArray + ") ");
+        log("testSparseArray(" + sparseArray + ") ");
     }
 
     @Override
     public void testMap(Map<String, IRemoteService> map) {
-        Log.d(TAG, tag + ".testMap(" + map + ") ");
+        log("testMap(" + map + ") ");
     }
 
     @Override
     public void testAidlArray(IRemoteService[] array) {
-        Log.d(TAG, tag + ".testAidlArray(" + Arrays.toString(array) + ") ");
+        log("testAidlArray(" + Arrays.toString(array) + ") ");
     }
 
     @Override
     public void testObjectArray(Object[] array) {
-        Log.d(TAG, tag + ".testObjectArray(" + Arrays.toString(array) + ") ");
+        log("testObjectArray(" + Arrays.toString(array) + ") ");
     }
 
     @Override
     public void testPrimitiveArray(int[] array) {
-        Log.d(TAG, tag + ".testPrimitiveArray(" + Arrays.toString(array) + ") ");
+        log("testPrimitiveArray(" + Arrays.toString(array) + ") ");
     }
 
     @Override
     public void testPrimitiveArray2(int[][] array) {
-        Log.d(TAG, tag + ".testPrimitiveArray2(" + Arrays.toString(array[0]) + ") ");
+        log("testPrimitiveArray2(" + Arrays.toString(array[0]) + ") ");
     }
 
     @Override
     public String toString() {
-        return "IParcelableImpl{" + tag + "}";
+        return "IParcelableImpl_" + tag;
     }
 }
