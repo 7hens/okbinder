@@ -31,10 +31,10 @@ _OkBinder is a lightweight IPC library that can be used to replace AIDL._
 
 ```groovy
 // maven { url "https://jitpack.io" }
-implementation("com.github.7hens.okbinder:okbinder:2.0")
+implementation("com.github.7hens.okbinder:okbinder2:2.0")
 
 // The following is optional
-annotationProcessor("com.github.7hens.okbinder:okbinder-compiler:2.0")
+annotationProcessor("com.github.7hens.okbinder:okbinder2-compiler:2.0")
 ```
 
 ## Sample usage

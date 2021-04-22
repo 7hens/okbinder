@@ -1,5 +1,5 @@
 rootProject.name = 'OkBinder'
 
-include ':okbinder'
+include ':okbinder2'
 include ':sample'
-include ':okbinder-compiler'
+include ':okbinder2-compiler'

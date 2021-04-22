@@ -24,11 +24,11 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(':okbinder')
-    annotationProcessor project(':okbinder-compiler')
+    implementation project(':okbinder2')
+    annotationProcessor project(':okbinder2-compiler')
 
-//    implementation("com.github.7hens.okbinder:okbinder:2.0")
-//    annotationProcessor("com.github.7hens.okbinder:okbinder-compiler:2.0")
+//    implementation("com.github.7hens.okbinder:okbinder2:2.0")
+//    annotationProcessor("com.github.7hens.okbinder:okbinder2-compiler:2.0")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
