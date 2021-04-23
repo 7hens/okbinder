@@ -21,7 +21,6 @@ public interface OkBinderFactory {
     }
 
     class BaseBinder extends Binder implements IInterface {
-        private static final String TAG = "@BaseBinder";
         protected final Object remoteObject;
         protected final String descriptor;
         protected final ClassLoader classLoader;
@@ -70,7 +69,7 @@ public interface OkBinderFactory {
                     }
                     Function function = functions.get(functionId);
                     if (function == null) {
-                        throw new NoSuchElementException("No registered function " + functionId);
+                        throw new NoSuchElementException("Unregistered function " + functionId);
                     }
                     Object result = function.invoke(remoteObject, args);
                     if (reply != null) {
@@ -85,7 +84,7 @@ public interface OkBinderFactory {
                     return true;
                 } catch (Throwable e) {
                     Throwable cause = ErrorUtils.unwrap(e);
-                    Log.e(TAG, "onTransact error", cause);
+                    Log.e(OkBinder.TAG, "Binder call failed", cause);
                     RemoteException remoteException = new RemoteException();
                     remoteException.initCause(cause);
                     throw remoteException;

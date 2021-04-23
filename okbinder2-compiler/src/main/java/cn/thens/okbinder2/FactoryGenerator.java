@@ -36,7 +36,7 @@ public final class FactoryGenerator {
 
     public void generate(TypeElement element) {
         TypeName MyInterface = ClassName.get(element.asType());
-        System.out.println("## getBinaryName: " + elementUtils.getBinaryName(element));
+//        System.out.println("## getBinaryName: " + elementUtils.getBinaryName(element));
         String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
 
         List<FieldSpec> factoryFields = new ArrayList<>();
@@ -45,7 +45,7 @@ public final class FactoryGenerator {
 
         int methodCount = 0;
         for (Element member : elementUtils.getAllMembers(element)) {
-            System.out.println("## member: " + member + ", " + member.getClass());
+//            System.out.println("## member: " + member + ", " + member.getClass());
             if (shouldSkipMethod(member)) {
                 continue;
             }
@@ -96,6 +96,7 @@ public final class FactoryGenerator {
                             .addParameter(TypeName.OBJECT, "obj")
                             .addParameter(ArrayTypeName.of(TypeName.OBJECT), "args")
                             .returns(TypeName.OBJECT)
+                            .addException(t.Throwable)
                             .addCode(functionInvokeCode)
                             .build())
                     .build();
@@ -131,7 +132,7 @@ public final class FactoryGenerator {
         ClassName MyProxy = MyFactory.nestedClass("MyProxy");
 
         TypeSpec MyFactorySpec = TypeSpec.classBuilder(MyFactory)
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addModifiers(Modifier.FINAL)
                 .addSuperinterface(t.OkBinderFactory)
                 .addMethod(MethodSpec.methodBuilder("newBinder")
                         .addModifiers(Modifier.PUBLIC)
@@ -151,7 +152,7 @@ public final class FactoryGenerator {
                         .build())
                 .addFields(factoryFields)
                 .addType(TypeSpec.classBuilder(MyProxy)
-                        .addModifiers(Modifier.STATIC, Modifier.FINAL)
+                        .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                         .superclass(t.BaseProxy)
                         .addSuperinterface(MyInterface)
                         .addMethod(MethodSpec.constructorBuilder()
@@ -162,7 +163,7 @@ public final class FactoryGenerator {
                         .addMethods(proxyMethods)
                         .build())
                 .addType(TypeSpec.classBuilder(MyBinder)
-                        .addModifiers(Modifier.STATIC, Modifier.FINAL)
+                        .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                         .superclass(t.BaseBinder)
                         .addMethod(MethodSpec.constructorBuilder()
                                 .addParameter(ParameterSpec.builder(t.Class, "serviceClass").build())

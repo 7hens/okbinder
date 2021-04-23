@@ -14,7 +14,7 @@ import java.util.Map;
 
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
-    private static final String TAG = "@OkBinder";
+    static final String TAG = "@OkBinder";
 
     public static Binder create(Object remoteObject) {
         Class<?> okBinderInterface = getOkBinderInterface(remoteObject);
@@ -50,8 +50,8 @@ public final class OkBinder {
             Class<?> factoryClass = classLoader.loadClass(factoryClassName);
             factory = (OkBinderFactory) factoryClass.newInstance();
         } catch (Throwable e) {
-            Log.w(TAG, "load factory class '" + factoryClassName + "' failed, " +
-                    "use default factory as fallback");
+            Log.w(TAG, "Unable to load the factory class " + factoryClassName + ", " +
+                    "the default factory will be used");
         }
         if (factory == null) {
             factory = defaultFactory;

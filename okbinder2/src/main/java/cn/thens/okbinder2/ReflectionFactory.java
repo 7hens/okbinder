@@ -40,7 +40,7 @@ final class ReflectionFactory implements OkBinderFactory {
     }
 
     private static final class MyBinder extends BaseBinder {
-        private MyBinder(Object remoteObject, Class<?> serviceClass) {
+        public MyBinder(Object remoteObject, Class<?> serviceClass) {
             super(serviceClass, remoteObject);
             for (Method method : serviceClass.getMethods()) {
                 if (method.isBridge()) continue;

@@ -21,7 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 -keepattributes *Annotation*
+#-keep class cn.thens.okbinder2.AIDL
 -keep @cn.thens.okbinder2.AIDL class * { *; }
--keep class * implements cn.thens.okbinder2.OkBinderFactory { *; }
--keep class * implements android.os.Parcelable { *; }
--keep class * implements java.io.Serializable { *; }
+-keep class !cn.thens.okbinder2.ReflectionFactory, * implements cn.thens.okbinder2.OkBinderFactory
