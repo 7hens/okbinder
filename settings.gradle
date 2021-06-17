@@ -1,5 +1,7 @@
+include ':sample-library'
+include ':sample-client'
 rootProject.name = 'OkBinder'
 
 include ':okbinder2'
-include ':sample'
+include ':sample-server'
 include ':okbinder2-compiler'
