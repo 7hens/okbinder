@@ -14,23 +14,27 @@ import cn.thens.okbinder2.AIDL;
 @SuppressWarnings("UnusedReturnValue")
 @AIDL
 interface IRemoteService {
-    String test();
+    void testVoid();
+
+    int testInt(int i);
+
+    String testString(String text);
 
     void testError(Boolean aBoolean, Parcelable aParcelable);
 
     IRemoteService testCallback(IRemoteService callback);
 
-    void testList(List<IRemoteService> list);
+    List<IRemoteService> testList(List<IRemoteService> list);
 
-    void testSparseArray(SparseArray<IRemoteService> sparseArray);
+    SparseArray<IRemoteService> testSparseArray(SparseArray<IRemoteService> sparseArray);
 
-    void testMap(Map<String, IRemoteService> map);
+    Map<String, IRemoteService> testMap(Map<String, IRemoteService> map);
 
-    void testAidlArray(IRemoteService[] array);
+    IRemoteService[]  testAidlArray(IRemoteService[] array);
 
-    void testObjectArray(Object[] array);
+    Object[] testObjectArray(Object[] array);
 
-    void testPrimitiveArray(int[] array);
+    int[] testPrimitiveArray(int[] array);
 
-    void testPrimitiveArray2(int[][] array);
+    int[][] testPrimitiveArray2(int[][] array);
 }

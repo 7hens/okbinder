@@ -28,26 +28,33 @@ public class MainActivity extends Activity implements ServiceConnection {
         Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
 
         IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
+        IRemoteService serviceA = new IRemoteServiceImpl("A");
+        IRemoteService serviceB = new IRemoteServiceImpl("B");
+        SparseArray<IRemoteService> sparseArray = new SparseArray<>();
+        sparseArray.put(1, serviceA);
+        sparseArray.put(2, serviceB);
+        int[] intArray = {1, 2};
+
+        remoteService.testVoid();
+        log("testInt", remoteService.testInt(1234));
+        log("testString", remoteService.testString("hello"));
+        log("testCallback", remoteService.testCallback(serviceA));
+        log("testList", remoteService.testList(Arrays.asList(serviceA, serviceB)));
+        log("testSparseArray", remoteService.testSparseArray(sparseArray));
+        log("testMap", remoteService.testMap(Collections.singletonMap("a", serviceA)));
+        log("testAidlArray", remoteService.testAidlArray(new IRemoteService[]{serviceA, serviceB}));
+        log("testObjectArray", remoteService.testObjectArray(new IRemoteService[]{serviceA, serviceB}));
+        log("testPrimitiveArray", remoteService.testPrimitiveArray(intArray));
+        log("testPrimitiveArray2", remoteService.testPrimitiveArray2(new int[][]{intArray, intArray}));
         try {
             remoteService.testError(false, ComponentName.unflattenFromString("a.b/.c"));
         } catch (Exception e) {
-            Log.e(TAG, "MainActivity: testError => \n" + Log.getStackTraceString(e));
+            log("testError", e);
         }
-        IRemoteService callback1 = new IRemoteServiceImpl("MainActivity1");
-        IRemoteService callback2 = new IRemoteServiceImpl("MainActivity2");
-        SparseArray<IRemoteService> sparseArray = new SparseArray<>();
-        sparseArray.put(1, callback1);
-        sparseArray.put(2, callback2);
+    }
 
-        remoteService.testCallback(callback1);
-        remoteService.testList(Arrays.asList(callback1, callback2));
-        remoteService.testSparseArray(sparseArray);
-        remoteService.testMap(Collections.singletonMap("mapKey", callback1));
-        remoteService.testAidlArray(new IRemoteService[]{callback1, callback2});
-        remoteService.testObjectArray(new IRemoteService[]{callback1, callback2});
-        int[] intArray = {1, 2};
-        remoteService.testPrimitiveArray(intArray);
-        remoteService.testPrimitiveArray2(new int[][]{intArray, intArray});
+    private void log(String tag, Object obj) {
+        Log.d(TAG, "[CLIENT] " + tag + ": " + Utils.toString(obj));
     }
 
     @Override

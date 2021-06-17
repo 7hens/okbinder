@@ -19,63 +19,81 @@ public final class IRemoteServiceImpl implements IRemoteService {
         this.tag = tag;
     }
 
-    private String log(String text) {
-        String msg = toString() + "." + text;
-        Log.d(TAG, msg);
-        return msg;
+    private void log(String tag, Object obj) {
+        Log.d(TAG, "--------------------------------------");
+        Log.d(TAG, "[SERVER] " + tag + ": " + Utils.toString(obj));
     }
-    
+
     @Override
-    public String test() {
-        return log("test()");
+    public void testVoid() {
+        log("testVoid", null);
+    }
+
+    @Override
+    public int testInt(int i) {
+        log("testInt", i);
+        return i;
+    }
+
+    @Override
+    public String testString(String text) {
+        log("testString", text);
+        return text;
     }
 
     @Override
     public void testError(Boolean aBoolean, Parcelable aParcelable) {
-        log("testError(" + aBoolean + ", " + aParcelable + ")");
+        log("testError", new Object[]{aBoolean, aParcelable});
         throw new NullPointerException();
     }
 
     @Override
     public IRemoteService testCallback(IRemoteService callback) {
-        log("testCallback(" + callback + ") ");
-        callback.test();
+        log("testCallback", callback);
+        callback.testVoid();
         return callback;
     }
 
     @Override
-    public void testList(List<IRemoteService> list) {
-        log("testList(" + list + ") ");
+    public List<IRemoteService> testList(List<IRemoteService> list) {
+        log("testList", list);
+        return list;
     }
 
     @Override
-    public void testSparseArray(SparseArray<IRemoteService> sparseArray) {
-        log("testSparseArray(" + sparseArray + ") ");
+    public SparseArray<IRemoteService> testSparseArray(SparseArray<IRemoteService> sparseArray) {
+        log("testSparseArray", sparseArray);
+        return sparseArray;
     }
 
     @Override
-    public void testMap(Map<String, IRemoteService> map) {
-        log("testMap(" + map + ") ");
+    public Map<String, IRemoteService> testMap(Map<String, IRemoteService> map) {
+        log("testMap", map);
+        return map;
     }
 
     @Override
-    public void testAidlArray(IRemoteService[] array) {
-        log("testAidlArray(" + Arrays.toString(array) + ") ");
+    public IRemoteService[] testAidlArray(IRemoteService[] array) {
+        log("testAidlArray", array);
+        return array;
     }
 
     @Override
-    public void testObjectArray(Object[] array) {
-        log("testObjectArray(" + Arrays.toString(array) + ") ");
+    public Object[] testObjectArray(Object[] array) {
+        log("testObjectArray", array);
+        return array;
     }
 
     @Override
-    public void testPrimitiveArray(int[] array) {
-        log("testPrimitiveArray(" + Arrays.toString(array) + ") ");
+    public int[] testPrimitiveArray(int[] array) {
+        log("testPrimitiveArray", array);
+        return array;
     }
 
     @Override
-    public void testPrimitiveArray2(int[][] array) {
-        log("testPrimitiveArray2(" + Arrays.toString(array[0]) + ") ");
+    public int[][] testPrimitiveArray2(int[][] array) {
+        log("testPrimitiveArray2", array);
+        return array;
     }
 
     @Override
