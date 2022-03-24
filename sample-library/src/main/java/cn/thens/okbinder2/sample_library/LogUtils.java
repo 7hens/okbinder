@@ -27,6 +27,10 @@ public final class LogUtils {
         }
     }
 
+    public static void log(String tag, Object obj) {
+        log(tag + ": " + Utils.toString(obj));
+    }
+
     public interface Printer {
         void print(String message);
     }

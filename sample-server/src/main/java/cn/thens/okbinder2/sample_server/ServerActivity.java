@@ -32,7 +32,9 @@ public class ServerActivity extends Activity implements LogUtils.Printer {
 
     @Override
     public void print(String message) {
-        logs += "\n" + message;
-        logView.setText(logs);
+        logView.post(() -> {
+            logs += "\n" + message;
+            logView.setText(logs);
+        });
     }
 }

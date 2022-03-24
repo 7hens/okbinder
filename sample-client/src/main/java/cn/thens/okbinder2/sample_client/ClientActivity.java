@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.method.ScrollingMovementMethod;
@@ -18,7 +19,6 @@ import java.util.Collections;
 import cn.thens.okbinder2.sample_library.IRemoteService;
 import cn.thens.okbinder2.sample_library.IRemoteServiceImpl;
 import cn.thens.okbinder2.sample_library.LogUtils;
-import cn.thens.okbinder2.sample_library.Utils;
 import cn.thens.okbinder2.OkBinder;
 
 /**
@@ -29,6 +29,8 @@ public class ClientActivity extends Activity implements ServiceConnection, LogUt
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
+        isServiceConnected = true;
+        log("CLIENT", "onServiceConnected: " + name.flattenToString());
         Toast.makeText(this, "please check the log", Toast.LENGTH_SHORT).show();
 
         IRemoteService remoteService = OkBinder.proxy(IRemoteService.class, service);
@@ -83,15 +85,18 @@ public class ClientActivity extends Activity implements ServiceConnection, LogUt
 
     @Override
     public void print(String message) {
-        logs += "\n" + message;
-        logView.setText(logs);
+        logView.post(() -> {
+            logs += "\n" + message;
+            logView.setText(logs);
+        });
     }
 
     private void log(String tag, Object obj) {
-        LogUtils.log(tag + ": " + Utils.toString(obj));
+        LogUtils.log(tag, obj);
     }
 
     private void rebindService(String componentName) {
+        log("CLIENT", "rebindService: " + componentName);
         logs = "";
         logView.setText("");
         if (isServiceConnected) {
@@ -99,11 +104,18 @@ public class ClientActivity extends Activity implements ServiceConnection, LogUt
         }
 
         ComponentName component = ComponentName.unflattenFromString(componentName);
-        bindService(new Intent().setComponent(component), this, Context.BIND_AUTO_CREATE);
-        isServiceConnected = true;
+        Intent serviceIntent = new Intent().setComponent(component);
+        ResolveInfo resolveInfo = getPackageManager().resolveService(serviceIntent, 0);
+        if (resolveInfo != null) {
+            bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
+        } else {
+            log("CLIENT", "cannot resolve intent: " + componentName);
+        }
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
+        log("CLIENT", "onServiceDisconnected: " + name.flattenToString());
+        isServiceConnected = false;
     }
 }
