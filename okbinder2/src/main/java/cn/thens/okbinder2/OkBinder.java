@@ -4,13 +4,12 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
+import android.util.LruCache;
 
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
@@ -34,10 +33,10 @@ public final class OkBinder {
         return (T) getFactory(serviceClass).newProxy(serviceClass, binder);
     }
 
-    private static final Map<Class<?>, OkBinderFactory> factories = new HashMap<>();
+    private static final LruCache<Class<?>, OkBinderFactory> factories = new LruCache<>(1024);
     private static final OkBinderFactory defaultFactory = new ReflectionFactory();
 
-    private static OkBinderFactory getFactory(Class<?> serviceClass) {
+    private synchronized static OkBinderFactory getFactory(Class<?> serviceClass) {
         require(isOkBinderInterface(serviceClass),
                 "Service class must be an interface with @AIDL annotation");
         OkBinderFactory factory = factories.get(serviceClass);

@@ -3,9 +3,10 @@ package cn.thens.okbinder2;
 public final class OkBinderVersion {
     public static final int MAGIC_NUMBER = -1588420922;
     public static final int V20 = 20;
+    public static final int V21 = 21;
 
     public static int current() {
-        return V20;
+        return V21;
     }
 
     public static int minSupported() {
