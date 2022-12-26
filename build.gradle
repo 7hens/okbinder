@@ -6,6 +6,9 @@ plugins {
 }
 
 allprojects {
+    ext {
+        TARGET_SDK_VERSION = ANDROID_SDK_VERSION.toInteger()
+    }
     tasks.withType(Javadoc) {
         excludes = ['**/*.kt']
         options.addStringOption('Xdoclint:none', '-quiet')

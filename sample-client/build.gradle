@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion TARGET_SDK_VERSION
     defaultConfig {
         applicationId "cn.thens.okbinder2.sample_client"
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion TARGET_SDK_VERSION
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
