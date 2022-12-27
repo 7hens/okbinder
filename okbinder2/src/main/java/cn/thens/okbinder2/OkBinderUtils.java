@@ -14,6 +14,12 @@ final class OkBinderUtils {
         return getFunctionId(method.getName(), toParamTypeNames(method.getParameterTypes()));
     }
 
+    public static String getFunctionId(CharSequence method, List<? extends CharSequence> paramTypes) {
+        String params = String.join(",", paramTypes);
+        String finalParams = params.length() <= 24 ? params : hash(params.getBytes());
+        return method + "(" + finalParams + ")";
+    }
+
     private static List<String> toParamTypeNames(Class<?>[] parameterTypes) {
         if (parameterTypes == null || parameterTypes.length == 0) {
             return Collections.emptyList();
@@ -23,12 +29,6 @@ final class OkBinderUtils {
             list.add(parameterType.getName());
         }
         return list;
-    }
-
-    private static String getFunctionId(CharSequence method, List<? extends CharSequence> paramTypes) {
-        String params = String.join(",", paramTypes);
-        String finalParams = params.length() <= 24 ? params : hash(params.getBytes());
-        return method + "(" + finalParams + ")";
     }
 
     private static String hash(byte[] bytes) {

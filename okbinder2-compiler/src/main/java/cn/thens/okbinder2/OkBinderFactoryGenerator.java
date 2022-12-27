@@ -10,9 +10,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import javax.annotation.processing.Filer;
@@ -112,7 +110,7 @@ public final class OkBinderFactoryGenerator {
             factoryFields.add(FieldSpec.builder(t.String, functionIdName)
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                     .initializer(CodeBlock.builder()
-                            .add("$S", getFunctionId(methodMember))
+                            .add("$S", OkBinderCompilerUtils.getFunctionId(methodMember))
                             .build())
                     .build());
 
@@ -216,27 +214,5 @@ public final class OkBinderFactoryGenerator {
             return ClassName.get(parameters.get(0).asType()).equals(TypeName.OBJECT);
         }
         return false;
-    }
-
-    private String getFunctionId(ExecutableElement method) {
-        StringBuilder functionId = new StringBuilder(method.getSimpleName());
-        StringBuilder params = new StringBuilder();
-        boolean isFirst = true;
-        for (VariableElement parameter : method.getParameters()) {
-            TypeName paramType = TypeName.get(parameter.asType());
-            params.append(isFirst ? "" : ",").append(paramType);
-            isFirst = false;
-        }
-        if (params.length() <= 24) {
-            return functionId.append("(").append(params).append(")").toString();
-        }
-        try {
-            byte[] bytes = params.toString().getBytes();
-            byte[] md5 = MessageDigest.getInstance("MD5").digest(bytes);
-            String base64 = new String(Base64.getEncoder().encode(md5));
-            return functionId.append("(").append(base64).append(")").toString();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
     }
 }
