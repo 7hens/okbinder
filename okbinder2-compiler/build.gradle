@@ -5,11 +5,12 @@ plugins {
 apply from: "$rootDir/publish.gradle"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
+    implementation(project(":okbinder2-common"))
     implementation("com.squareup:javapoet:1.13.0")
 //    api project(':okbinder-annotations')
 }

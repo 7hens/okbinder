@@ -2,12 +2,9 @@ package cn.thens.okbinder2;
 
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Base64;
 import android.util.Log;
 import android.util.LruCache;
 
-import java.lang.reflect.Method;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,26 +74,5 @@ public final class OkBinder {
         }
         if (okBinderInterfaces.size() != 1) return null;
         return okBinderInterfaces.get(0);
-    }
-
-    public static String getFunctionId(Method method) {
-        StringBuilder functionId = new StringBuilder(method.getName());
-        StringBuilder params = new StringBuilder();
-        boolean isFirst = true;
-        for (Class<?> paramType : method.getParameterTypes()) {
-            params.append(isFirst ? "" : ",").append(paramType.getName());
-            isFirst = false;
-        }
-        if (params.length() <= 24) {
-            return functionId.append("(").append(params).append(")").toString();
-        }
-        try {
-            byte[] bytes = params.toString().getBytes();
-            byte[] md5 = MessageDigest.getInstance("MD5").digest(bytes);
-            String base64 = Base64.encodeToString(md5, Base64.NO_WRAP);
-            return functionId.append("(").append(base64).append(")").toString();
-        } catch (Throwable e) {
-            throw ErrorUtils.wrap(e);
-        }
     }
 }

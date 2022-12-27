@@ -15,7 +15,7 @@ public final class OkBinderProcessor extends AbstractProcessor {
         Elements elementUtils = processingEnv.getElementUtils();
         Set<? extends Element> elements = env.getElementsAnnotatedWith(AIDL.class);
         RelatedTypes t = new RelatedTypes();
-        FactoryGenerator generator = new FactoryGenerator(t, elementUtils, processingEnv.getFiler());
+        OkBinderFactoryGenerator generator = new OkBinderFactoryGenerator(t, elementUtils, processingEnv.getFiler());
         for (Element element : elements) {
             TypeElement typeElement = (TypeElement) element;
             generator.generate(typeElement);

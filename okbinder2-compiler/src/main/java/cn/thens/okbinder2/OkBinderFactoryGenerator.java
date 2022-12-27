@@ -23,12 +23,12 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 
-public final class FactoryGenerator {
+public final class OkBinderFactoryGenerator {
     private final RelatedTypes t;
     private final Elements elementUtils;
     private final Filer filer;
 
-    public FactoryGenerator(RelatedTypes types, Elements elementUtils, Filer filer) {
+    public OkBinderFactoryGenerator(RelatedTypes types, Elements elementUtils, Filer filer) {
         this.t = types;
         this.elementUtils = elementUtils;
         this.filer = filer;
