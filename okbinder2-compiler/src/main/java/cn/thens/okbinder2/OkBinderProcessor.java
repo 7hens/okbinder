@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -13,14 +14,26 @@ public final class OkBinderProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
         Elements elementUtils = processingEnv.getElementUtils();
-        Set<? extends Element> elements = env.getElementsAnnotatedWith(AIDL.class);
+        Filer filer = processingEnv.getFiler();
         RelatedTypes t = new RelatedTypes();
-        OkBinderFactoryGenerator generator = new OkBinderFactoryGenerator(t, elementUtils, processingEnv.getFiler());
+
+        for (Element element : env.getElementsAnnotatedWith(AIDL.class)) {
+            TypeElement typeElement = (TypeElement) element;
+        }
+        for (Element element : env.getElementsAnnotatedWith(GenParcelable.class)) {
+            new OkBinderParcelableGenerator(t, processingEnv, (TypeElement) element).generate();
+        }
+
+        generate(new OkBinderFactoryGenerator(t, elementUtils, filer),
+                env.getElementsAnnotatedWith(AIDL.class));
+        return false;
+    }
+
+    private void generate(TypeElementGenerator generator, Set<? extends Element> elements) {
         for (Element element : elements) {
             TypeElement typeElement = (TypeElement) element;
             generator.generate(typeElement);
         }
-        return false;
     }
 
     @Override

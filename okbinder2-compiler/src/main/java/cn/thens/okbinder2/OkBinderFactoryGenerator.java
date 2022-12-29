@@ -10,6 +10,8 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.apache.commons.lang3.Validate;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +23,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 
-public final class OkBinderFactoryGenerator {
+public final class OkBinderFactoryGenerator implements TypeElementGenerator {
     private final RelatedTypes t;
     private final Elements elementUtils;
     private final Filer filer;
@@ -32,7 +34,9 @@ public final class OkBinderFactoryGenerator {
         this.filer = filer;
     }
 
+    @Override
     public void generate(TypeElement element) {
+        Validate.isTrue(element.getKind().isInterface(), "Not an interface: %s", element.getKind());
         TypeName MyInterface = ClassName.get(element.asType());
 //        System.out.println("## getBinaryName: " + elementUtils.getBinaryName(element));
         String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
@@ -194,7 +198,7 @@ public final class OkBinderFactoryGenerator {
             return true;
         }
         for (Modifier modifier : member.getModifiers()) {
-            if (modifier == Modifier.FINAL || modifier == Modifier.STATIC) {
+            if (modifier == Modifier.PRIVATE || modifier == Modifier.FINAL || modifier == Modifier.STATIC) {
                 return true;
             }
         }

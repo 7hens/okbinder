@@ -12,5 +12,5 @@ java {
 dependencies {
     implementation(project(":okbinder2-common"))
     implementation("com.squareup:javapoet:1.13.0")
-//    api project(':okbinder-annotations')
+    implementation("org.apache.commons:commons-lang3:3.12.0")
 }

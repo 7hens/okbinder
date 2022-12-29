@@ -1,11 +1,15 @@
 package cn.thens.okbinder2;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeVariableName;
 
 final class RelatedTypes {
-    private static final String BINDER = "android.os";
-    ClassName Binder = ClassName.get(BINDER, "Binder");
-    ClassName IBinder = ClassName.get(BINDER, "IBinder");
+    private static final String ANDROID_OS = "android.os";
+    ClassName Binder = ClassName.get(ANDROID_OS, "Binder");
+    ClassName IBinder = ClassName.get(ANDROID_OS, "IBinder");
+    ClassName Parcelable = ClassName.get(ANDROID_OS, "Parcelable");
+    ClassName ParcelableCreator = Parcelable.nestedClass("Creator");
+    ClassName Parcel = ClassName.get(ANDROID_OS, "Parcel");
     ClassName Override = ClassName.get(Override.class);
     ClassName Throwable = ClassName.get(Throwable.class);
 
