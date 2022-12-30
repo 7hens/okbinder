@@ -23,4 +23,6 @@
 -keepattributes *Annotation*
 #-keep class cn.thens.okbinder2.AIDL
 -keep @cn.thens.okbinder2.AIDL class * { *; }
+-keep @cn.thens.okbinder2.GenParcelable class * { *; }
 -keep class !cn.thens.okbinder2.ReflectionFactory, * implements cn.thens.okbinder2.OkBinderFactory
+-keep class * implements android.os.Parcelable

@@ -14,6 +14,7 @@ final class ElementUtils {
         return !containsAny(method.getModifiers(), Modifier.PRIVATE, Modifier.FINAL, Modifier.STATIC);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isObjectMethod(ExecutableElement method) {
         return isType(method.getEnclosingElement().asType(), Object.class);
     }

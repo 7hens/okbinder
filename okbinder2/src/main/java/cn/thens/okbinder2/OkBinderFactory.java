@@ -76,14 +76,21 @@ public interface OkBinderFactory {
                     }
                     return true;
                 } catch (Throwable e) {
-                    Throwable cause = ErrorUtils.unwrap(e);
-                    Log.e(OkBinder.TAG, "Binder call failed", cause);
-                    RemoteException remoteException = new RemoteException();
-                    remoteException.initCause(cause);
-                    throw remoteException;
+                    throwRemoteException(e);
                 }
             }
             return super.onTransact(code, data, reply, flags);
+        }
+
+        private void throwRemoteException(Throwable e) throws RemoteException {
+            Throwable cause = ErrorUtils.unwrap(e);
+            Log.e(OkBinder.TAG, "Binder call failed", cause);
+            if (cause instanceof RemoteException) {
+                throw (RemoteException) cause;
+            }
+            RemoteException remoteException = new RemoteException();
+            remoteException.initCause(cause);
+            throw remoteException;
         }
 
         private void checkMagicNumber(int magicNumber) {

@@ -7,6 +7,7 @@ import android.util.LruCache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
@@ -17,6 +18,7 @@ public final class OkBinder {
         Class<?> okBinderInterface = getOkBinderInterface(remoteObject);
         require(okBinderInterface != null,
                 "Remote object must implement only one interface with @AIDL annotation");
+        Objects.equals("a", "b");
         return create((Class<Object>) okBinderInterface, remoteObject);
     }
 
