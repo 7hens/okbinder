@@ -4,7 +4,6 @@ import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
@@ -14,126 +13,118 @@ import org.apache.commons.lang3.Validate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.processing.Filer;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.Elements;
 
-public final class OkBinderFactoryGenerator implements TypeElementGenerator {
+public final class OkBinderFactoryGenerator {
     private final ProcessingHelper h;
-    private final Elements elementUtils;
-    private final Filer filer;
+    private final TypeElement element;
 
-    public OkBinderFactoryGenerator(ProcessingHelper h, Elements elementUtils, Filer filer) {
+    private final List<FieldSpec> factoryFields = new ArrayList<>();
+    private final List<MethodSpec> proxyMethods = new ArrayList<>();
+    private final CodeBlock.Builder binderFunctionCode = CodeBlock.builder();
+
+    public OkBinderFactoryGenerator(ProcessingHelper h, TypeElement element) {
         this.h = h;
-        this.elementUtils = elementUtils;
-        this.filer = filer;
+        this.element = element;
+
+        Validate.isTrue(element.getKind().isInterface(), "Not an interface: %s", element.getKind());
     }
 
-    @Override
-    public void generate(TypeElement element) {
-        Validate.isTrue(element.getKind().isInterface(), "Not an interface: %s", element.getKind());
+    public void generate() {
+        AtomicInteger index = new AtomicInteger();
+        h.getAllMethods(element).stream()
+                .filter(method -> !ElementUtils.isObjectMethod(method) && ElementUtils.isOverridable(method))
+                .forEach(method -> buildCodes(method, index.getAndIncrement()));
+        h.writeJavaFile(h.getPackageName(element), buildType());
+    }
+
+    private void buildCodes(ExecutableElement method, int methodIndex) {
         TypeName MyInterface = ClassName.get(element.asType());
-//        System.out.println("## getBinaryName: " + elementUtils.getBinaryName(element));
-        String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
+        String methodName = method.getSimpleName().toString();
+        TypeName returnType = ClassName.get(method.getReturnType());
+        String functionIdName = methodName + "_" + methodIndex;
 
-        List<FieldSpec> factoryFields = new ArrayList<>();
-        List<MethodSpec> proxyMethods = new ArrayList<>();
-        CodeBlock.Builder binderFunctionCode = CodeBlock.builder();
-
-        int methodCount = 0;
-        for (Element member : elementUtils.getAllMembers(element)) {
-//            System.out.println("## member: " + member + ", " + member.getClass());
-            if (shouldSkipMethod(member)) {
-                continue;
-            }
-            ExecutableElement methodMember = (ExecutableElement) member;
-            String methodName = methodMember.getSimpleName().toString();
-            TypeName returnType = ClassName.get(methodMember.getReturnType());
-            String functionIdName = methodName + "_" + methodCount;
-
-            List<CodeBlock> functionInvokeArgs = new ArrayList<>();
-            List<ParameterSpec> proxyMethodParams = new ArrayList<>();
-            CodeBlock.Builder proxyMethodInvokeArgCode = CodeBlock.builder();
-            for (VariableElement parameter : methodMember.getParameters()) {
-                TypeName ParamType = ClassName.get(parameter.asType());
-                int index = functionInvokeArgs.size();
-                functionInvokeArgs.add(CodeBlock.of("($T) args[$L]", ParamType, index));
-                proxyMethodParams.add(ParameterSpec.builder(ParamType, "arg" + index)
-                        .build());
-                if (index == 0) {
-                    proxyMethodInvokeArgCode.add(", (Object) arg" + index);
-                } else {
-                    proxyMethodInvokeArgCode.add(", arg" + index);
-                }
-            }
-
-            CodeBlock functionInvokeCode = CodeBlock.of("(($T) obj).$L($L)",
-                    MyInterface, methodName, CodeBlock.join(functionInvokeArgs, ", "));
-            CodeBlock proxyMethodInvokeCodes;
-            if (!TypeName.VOID.equals(returnType)) {
-                functionInvokeCode = CodeBlock.builder()
-                        .addStatement("return ($T) $L", returnType, functionInvokeCode)
-                        .build();
-                proxyMethodInvokeCodes = CodeBlock.of("return ($T) transact(0, $L$L)",
-                        returnType, functionIdName, proxyMethodInvokeArgCode.build());
+        List<CodeBlock> functionInvokeArgs = new ArrayList<>();
+        List<ParameterSpec> proxyMethodParams = new ArrayList<>();
+        CodeBlock.Builder proxyMethodInvokeArgCode = CodeBlock.builder();
+        for (VariableElement parameter : method.getParameters()) {
+            TypeName ParamType = ClassName.get(parameter.asType());
+            int argIndex = functionInvokeArgs.size();
+            functionInvokeArgs.add(CodeBlock.of("($T) args[$L]", ParamType, argIndex));
+            proxyMethodParams.add(ParameterSpec.builder(ParamType, "arg" + argIndex)
+                    .build());
+            if (argIndex == 0) {
+                proxyMethodInvokeArgCode.add(", (Object) arg" + argIndex);
             } else {
-                functionInvokeCode = CodeBlock.builder()
-                        .addStatement(functionInvokeCode)
-                        .addStatement("return null")
-                        .build();
-                proxyMethodInvokeCodes = CodeBlock.of("transact($T.FLAG_ONEWAY, $L$L)",
-                        h.IBinder, functionIdName, proxyMethodInvokeArgCode.build());
+                proxyMethodInvokeArgCode.add(", arg" + argIndex);
             }
-
-            TypeSpec MyFunction = TypeSpec.anonymousClassBuilder("")
-                    .addSuperinterface(h.Function)
-                    .addMethod(MethodSpec.methodBuilder("invoke")
-                            .addAnnotation(h.Override)
-                            .addModifiers(Modifier.PUBLIC)
-                            .addParameter(TypeName.OBJECT, "obj")
-                            .addParameter(ArrayTypeName.of(TypeName.OBJECT), "args")
-                            .returns(TypeName.OBJECT)
-                            .addException(h.Throwable)
-                            .addCode(functionInvokeCode)
-                            .build())
-                    .build();
-
-//            String functionName = functionIdName + "F";
-//            factoryFields.add(FieldSpec.builder(t.Function, functionName)
-//                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-//                    .initializer(CodeBlock.of("$L", MyFunction))
-//                    .build());
-
-            binderFunctionCode.addStatement("register($L, $L)", functionIdName, MyFunction);
-
-            factoryFields.add(FieldSpec.builder(h.String, functionIdName)
-                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                    .initializer(CodeBlock.builder()
-                            .add("$S", CompilerFunctionUtils.getFunctionId(methodMember))
-                            .build())
-                    .build());
-
-            proxyMethods.add(MethodSpec.methodBuilder(methodName)
-                    .addModifiers(Modifier.PUBLIC)
-                    .addAnnotation(h.Override)
-                    .addParameters(proxyMethodParams)
-                    .returns(returnType)
-                    .addStatement(proxyMethodInvokeCodes)
-                    .build());
-            methodCount++;
         }
 
+        CodeBlock functionInvokeCode = CodeBlock.of("(($T) obj).$L($L)",
+                MyInterface, methodName, CodeBlock.join(functionInvokeArgs, ", "));
+        CodeBlock proxyMethodInvokeCodes;
+        if (!TypeName.VOID.equals(returnType)) {
+            functionInvokeCode = CodeBlock.builder()
+                    .addStatement("return ($T) $L", returnType, functionInvokeCode)
+                    .build();
+            proxyMethodInvokeCodes = CodeBlock.of("return ($T) transact(0, $L$L)",
+                    returnType, functionIdName, proxyMethodInvokeArgCode.build());
+        } else {
+            functionInvokeCode = CodeBlock.builder()
+                    .addStatement(functionInvokeCode)
+                    .addStatement("return null")
+                    .build();
+            proxyMethodInvokeCodes = CodeBlock.of("transact($T.FLAG_ONEWAY, $L$L)",
+                    h.IBinder, functionIdName, proxyMethodInvokeArgCode.build());
+        }
+
+        TypeSpec MyFunction = TypeSpec.anonymousClassBuilder("")
+                .addSuperinterface(h.Function)
+                .addMethod(MethodSpec.methodBuilder("invoke")
+                        .addAnnotation(h.Override)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(TypeName.OBJECT, "obj")
+                        .addParameter(ArrayTypeName.of(TypeName.OBJECT), "args")
+                        .returns(TypeName.OBJECT)
+                        .addException(h.Throwable)
+                        .addCode(functionInvokeCode)
+                        .build())
+                .build();
+
+//        factoryFields.add(FieldSpec.builder(h.Function, functionIdName + "F")
+//                .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+//                .initializer(CodeBlock.of("$L", MyFunction))
+//                .build());
+
+        binderFunctionCode.addStatement("register($L, $L)", functionIdName, MyFunction);
+
+        factoryFields.add(FieldSpec.builder(h.String, functionIdName)
+                .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                .initializer(CodeBlock.of("$S", CompilerFunctionUtils.getFunctionId(method)))
+                .build());
+
+        proxyMethods.add(MethodSpec.methodBuilder(methodName)
+                .addModifiers(Modifier.PUBLIC)
+                .addAnnotation(h.Override)
+                .addParameters(proxyMethodParams)
+                .returns(returnType)
+                .addStatement(proxyMethodInvokeCodes)
+                .build());
+    }
+
+    private TypeSpec buildType() {
         // Factory class
-        ClassName MyFactory = ClassName.get(packageName, getClassName(element) + "Factory");
+        ClassName MyFactory = ClassName.get(h.getPackageName(element), element.getSimpleName() + "Factory");
         ClassName MyBinder = MyFactory.nestedClass("MyBinder");
         ClassName MyProxy = MyFactory.nestedClass("MyProxy");
+        TypeName MyInterface = ClassName.get(element.asType());
 
-        TypeSpec MyFactorySpec = TypeSpec.classBuilder(MyFactory)
+        return TypeSpec.classBuilder(MyFactory)
                 .addModifiers(Modifier.FINAL)
                 .addSuperinterface(h.OkBinderFactory)
                 .addMethod(MethodSpec.methodBuilder("newBinder")
@@ -175,48 +166,5 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
                                 .build())
                         .build())
                 .build();
-
-        try {
-            JavaFile.builder(packageName, MyFactorySpec)
-                    .indent("    ")
-                    .build()
-                    .writeTo(filer);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getClassName(TypeElement element) {
-        String fileName = elementUtils.getBinaryName(element).toString();
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
-    }
-
-    private static final boolean SHOULD_SKIP_OBJECT_METHODS = true;
-
-    private boolean shouldSkipMethod(Element member) {
-        if (!(member instanceof ExecutableElement)) {
-            return true;
-        }
-        for (Modifier modifier : member.getModifiers()) {
-            if (modifier == Modifier.PRIVATE || modifier == Modifier.FINAL || modifier == Modifier.STATIC) {
-                return true;
-            }
-        }
-        if (!SHOULD_SKIP_OBJECT_METHODS) {
-            return false;
-        }
-        ExecutableElement methodMember = (ExecutableElement) member;
-        String methodName = methodMember.getSimpleName().toString();
-        List<? extends VariableElement> parameters = methodMember.getParameters();
-        if (methodName.equals("toString") && parameters.isEmpty()) {
-            return true;
-        }
-        if (methodName.equals("hashCode") && parameters.isEmpty()) {
-            return true;
-        }
-        if (methodName.equals("equals") && parameters.size() == 1) {
-            return ClassName.get(parameters.get(0).asType()).equals(TypeName.OBJECT);
-        }
-        return false;
     }
 }

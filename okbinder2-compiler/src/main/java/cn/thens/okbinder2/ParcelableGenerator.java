@@ -4,7 +4,6 @@ import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -23,7 +22,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
 
-public class OkBinderParcelableGenerator {
+public class ParcelableGenerator {
     private final ProcessingHelper h;
     private final TypeElement element;
 
@@ -37,7 +36,7 @@ public class OkBinderParcelableGenerator {
     private final CodeBlock.Builder createFromParcelCode = CodeBlock.builder();
     private final CodeBlock.Builder writeToParcelCode = CodeBlock.builder();
 
-    public OkBinderParcelableGenerator(ProcessingHelper h, TypeElement element) {
+    public ParcelableGenerator(ProcessingHelper h, TypeElement element) {
         this.h = h;
         this.element = element;
 
@@ -51,18 +50,7 @@ public class OkBinderParcelableGenerator {
         h.getAllMethods(element).stream()
                 .filter(method -> !ElementUtils.isObjectMethod(method) && ElementUtils.isOverridable(method))
                 .forEach(this::buildCodes);
-        generateParcelableClass();
-    }
-
-    private void generateParcelableClass() {
-        try {
-            JavaFile.builder(packageName, buildType())
-                    .indent("    ")
-                    .build()
-                    .writeTo(h.env().getFiler());
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        h.writeJavaFile(packageName, buildType());
     }
 
     private void buildCodes(ExecutableElement method) {

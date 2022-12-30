@@ -1,7 +1,10 @@
 package cn.thens.okbinder2;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,5 +56,16 @@ final class ProcessingHelper {
 
     public String getPackageName(Element element) {
         return env.getElementUtils().getPackageOf(element).getQualifiedName().toString();
+    }
+
+    public void writeJavaFile(String packageName, TypeSpec typeSpec) {
+        try {
+            JavaFile.builder(packageName, typeSpec)
+                    .indent("    ")
+                    .build()
+                    .writeTo(env.getFiler());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
