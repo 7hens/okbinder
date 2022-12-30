@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class OkBinderUtils {
+final class FunctionUtils {
+    private static final int MAX_PARAMS_LENGTH = 24;
 
     public static String getFunctionId(Method method) {
         return getFunctionId(method.getName(), toParamTypeNames(method.getParameterTypes()));
@@ -16,7 +17,7 @@ final class OkBinderUtils {
 
     public static String getFunctionId(CharSequence method, List<? extends CharSequence> paramTypes) {
         String params = String.join(",", paramTypes);
-        String finalParams = params.length() <= 24 ? params : hash(params.getBytes());
+        String finalParams = params.length() <= MAX_PARAMS_LENGTH ? params : hash(params.getBytes());
         return method + "(" + finalParams + ")";
     }
 

@@ -44,7 +44,7 @@ final class ReflectionFactory implements OkBinderFactory {
             super(serviceClass, remoteObject);
             for (Method method : serviceClass.getMethods()) {
                 if (method.isBridge()) continue;
-                register(OkBinderUtils.getFunctionId(method), new MethodFunction(method));
+                register(FunctionUtils.getFunctionId(method), new MethodFunction(method));
             }
         }
     }
@@ -57,7 +57,7 @@ final class ReflectionFactory implements OkBinderFactory {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) {
             int flags = isOneWay(method) ? IBinder.FLAG_ONEWAY : 0;
-            return transact(flags, OkBinderUtils.getFunctionId(method), args);
+            return transact(flags, FunctionUtils.getFunctionId(method), args);
         }
     }
 

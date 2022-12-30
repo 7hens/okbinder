@@ -114,7 +114,7 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
             factoryFields.add(FieldSpec.builder(h.String, functionIdName)
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                     .initializer(CodeBlock.builder()
-                            .add("$S", OkBinderCompilerUtils.getFunctionId(methodMember))
+                            .add("$S", CompilerFunctionUtils.getFunctionId(methodMember))
                             .build())
                     .build());
 

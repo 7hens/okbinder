@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
 
-final class OkBinderCompilerUtils {
+final class CompilerFunctionUtils {
+    private static final int MAX_PARAMS_LENGTH = 24;
 
     public static String getFunctionId(Method method) {
         return getFunctionId(method.getName(), Arrays.stream(method.getParameterTypes())
@@ -27,7 +28,7 @@ final class OkBinderCompilerUtils {
 
     public static String getFunctionId(CharSequence method, List<? extends CharSequence> paramTypes) {
         String params = String.join(",", paramTypes);
-        String finalParams = params.length() <= 24 ? params : hash(params.getBytes());
+        String finalParams = params.length() <= MAX_PARAMS_LENGTH ? params : hash(params.getBytes());
         return method + "(" + finalParams + ")";
     }
 
