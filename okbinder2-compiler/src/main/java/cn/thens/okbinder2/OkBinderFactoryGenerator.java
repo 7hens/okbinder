@@ -24,12 +24,12 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 
 public final class OkBinderFactoryGenerator implements TypeElementGenerator {
-    private final RelatedTypes t;
+    private final ProcessingHelper h;
     private final Elements elementUtils;
     private final Filer filer;
 
-    public OkBinderFactoryGenerator(RelatedTypes types, Elements elementUtils, Filer filer) {
-        this.t = types;
+    public OkBinderFactoryGenerator(ProcessingHelper h, Elements elementUtils, Filer filer) {
+        this.h = h;
         this.elementUtils = elementUtils;
         this.filer = filer;
     }
@@ -87,18 +87,18 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
                         .addStatement("return null")
                         .build();
                 proxyMethodInvokeCodes = CodeBlock.of("transact($T.FLAG_ONEWAY, $L$L)",
-                        t.IBinder, functionIdName, proxyMethodInvokeArgCode.build());
+                        h.IBinder, functionIdName, proxyMethodInvokeArgCode.build());
             }
 
             TypeSpec MyFunction = TypeSpec.anonymousClassBuilder("")
-                    .addSuperinterface(t.Function)
+                    .addSuperinterface(h.Function)
                     .addMethod(MethodSpec.methodBuilder("invoke")
-                            .addAnnotation(t.Override)
+                            .addAnnotation(h.Override)
                             .addModifiers(Modifier.PUBLIC)
                             .addParameter(TypeName.OBJECT, "obj")
                             .addParameter(ArrayTypeName.of(TypeName.OBJECT), "args")
                             .returns(TypeName.OBJECT)
-                            .addException(t.Throwable)
+                            .addException(h.Throwable)
                             .addCode(functionInvokeCode)
                             .build())
                     .build();
@@ -111,7 +111,7 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
 
             binderFunctionCode.addStatement("register($L, $L)", functionIdName, MyFunction);
 
-            factoryFields.add(FieldSpec.builder(t.String, functionIdName)
+            factoryFields.add(FieldSpec.builder(h.String, functionIdName)
                     .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                     .initializer(CodeBlock.builder()
                             .add("$S", OkBinderCompilerUtils.getFunctionId(methodMember))
@@ -120,7 +120,7 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
 
             proxyMethods.add(MethodSpec.methodBuilder(methodName)
                     .addModifiers(Modifier.PUBLIC)
-                    .addAnnotation(t.Override)
+                    .addAnnotation(h.Override)
                     .addParameters(proxyMethodParams)
                     .returns(returnType)
                     .addStatement(proxyMethodInvokeCodes)
@@ -135,40 +135,40 @@ public final class OkBinderFactoryGenerator implements TypeElementGenerator {
 
         TypeSpec MyFactorySpec = TypeSpec.classBuilder(MyFactory)
                 .addModifiers(Modifier.FINAL)
-                .addSuperinterface(t.OkBinderFactory)
+                .addSuperinterface(h.OkBinderFactory)
                 .addMethod(MethodSpec.methodBuilder("newBinder")
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(t.Class, "serviceClass")
+                        .addParameter(h.Class, "serviceClass")
                         .addParameter(TypeName.OBJECT, "remoteObject")
-                        .returns(t.Binder)
-                        .addAnnotation(t.Override)
+                        .returns(h.Binder)
+                        .addAnnotation(h.Override)
                         .addStatement("return new $T(serviceClass, remoteObject)", MyBinder)
                         .build())
                 .addMethod(MethodSpec.methodBuilder("newProxy")
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(t.Class, "serviceClass")
-                        .addParameter(t.IBinder, "binder")
+                        .addParameter(h.Class, "serviceClass")
+                        .addParameter(h.IBinder, "binder")
                         .returns(TypeName.OBJECT)
-                        .addAnnotation(t.Override)
+                        .addAnnotation(h.Override)
                         .addStatement("return new $T(serviceClass, binder)", MyProxy)
                         .build())
                 .addFields(factoryFields)
                 .addType(TypeSpec.classBuilder(MyProxy)
                         .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                        .superclass(t.BaseProxy)
+                        .superclass(h.BaseProxy)
                         .addSuperinterface(MyInterface)
                         .addMethod(MethodSpec.constructorBuilder()
-                                .addParameter(ParameterSpec.builder(t.Class, "serviceClass").build())
-                                .addParameter(ParameterSpec.builder(t.IBinder, "binder").build())
+                                .addParameter(ParameterSpec.builder(h.Class, "serviceClass").build())
+                                .addParameter(ParameterSpec.builder(h.IBinder, "binder").build())
                                 .addStatement("super(serviceClass, binder)")
                                 .build())
                         .addMethods(proxyMethods)
                         .build())
                 .addType(TypeSpec.classBuilder(MyBinder)
                         .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                        .superclass(t.BaseBinder)
+                        .superclass(h.BaseBinder)
                         .addMethod(MethodSpec.constructorBuilder()
-                                .addParameter(ParameterSpec.builder(t.Class, "serviceClass").build())
+                                .addParameter(ParameterSpec.builder(h.Class, "serviceClass").build())
                                 .addParameter(ParameterSpec.builder(ClassName.OBJECT, "obj").build())
                                 .addStatement("super(serviceClass, obj)")
                                 .addCode(binderFunctionCode.build())

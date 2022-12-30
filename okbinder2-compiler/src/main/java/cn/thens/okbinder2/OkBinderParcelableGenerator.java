@@ -16,9 +16,7 @@ import org.apache.commons.lang3.Validate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -26,8 +24,7 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
 
 public class OkBinderParcelableGenerator {
-    private final RelatedTypes t;
-    private final ProcessingEnvironment processingEnv;
+    private final ProcessingHelper h;
     private final TypeElement element;
 
     private final String packageName;
@@ -40,21 +37,18 @@ public class OkBinderParcelableGenerator {
     private final CodeBlock.Builder createFromParcelCode = CodeBlock.builder();
     private final CodeBlock.Builder writeToParcelCode = CodeBlock.builder();
 
-    public OkBinderParcelableGenerator(RelatedTypes t, ProcessingEnvironment processingEnv, TypeElement element) {
-        this.t = t;
-        this.processingEnv = processingEnv;
+    public OkBinderParcelableGenerator(ProcessingHelper h, TypeElement element) {
+        this.h = h;
         this.element = element;
 
-        packageName = processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString();
+        packageName = h.getPackageName(element);
         parcelableClassName = ClassName.get(packageName, element.getSimpleName() + "Parcelable");
 
         Validate.isTrue(element.getKind().isInterface(), "Not an interface: %s", element.getKind());
     }
 
     public void generate() {
-        processingEnv.getElementUtils().getAllMembers(element).stream()
-                .filter(member -> member instanceof ExecutableElement)
-                .map(member -> (ExecutableElement) member)
+        h.getAllMethods(element).stream()
                 .filter(method -> !ElementUtils.isObjectMethod(method) && ElementUtils.isOverridable(method))
                 .forEach(this::buildCodes);
         generateParcelableClass();
@@ -65,7 +59,7 @@ public class OkBinderParcelableGenerator {
             JavaFile.builder(packageName, buildType())
                     .indent("    ")
                     .build()
-                    .writeTo(processingEnv.getFiler());
+                    .writeTo(h.env().getFiler());
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -78,7 +72,7 @@ public class OkBinderParcelableGenerator {
 
         fields.add(FieldSpec.builder(typeName, name, Modifier.PRIVATE, Modifier.FINAL).build());
         methods.add(MethodSpec.methodBuilder(name)
-                .addAnnotation(t.Override)
+                .addAnnotation(h.Override)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(typeName)
                 .addStatement("return $L", name)
@@ -107,19 +101,19 @@ public class OkBinderParcelableGenerator {
 
     private TypeSpec buildType() {
         TypeName targetClass = ClassName.get(element.asType());
-        TypeName creatorClass = ParameterizedTypeName.get(t.ParcelableCreator, parcelableClassName);
+        TypeName creatorClass = ParameterizedTypeName.get(h.ParcelableCreator, parcelableClassName);
 
         TypeSpec creatorImplClass = TypeSpec.anonymousClassBuilder("")
                 .addSuperinterface(creatorClass)
                 .addMethod(MethodSpec.methodBuilder("createFromParcel")
-                        .addAnnotation(t.Override)
+                        .addAnnotation(h.Override)
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(ParameterSpec.builder(t.Parcel, "source").build())
+                        .addParameter(ParameterSpec.builder(h.Parcel, "source").build())
                         .returns(parcelableClassName)
                         .addStatement("return new $T(source)", parcelableClassName)
                         .build())
                 .addMethod(MethodSpec.methodBuilder("newArray")
-                        .addAnnotation(t.Override)
+                        .addAnnotation(h.Override)
                         .addModifiers(Modifier.PUBLIC)
                         .addParameter(ParameterSpec.builder(int.class, "size").build())
                         .returns(ArrayTypeName.of(parcelableClassName))
@@ -130,7 +124,7 @@ public class OkBinderParcelableGenerator {
         return TypeSpec.classBuilder(element.getSimpleName().toString() + "Parcelable")
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(targetClass)
-                .addSuperinterface(t.Parcelable)
+                .addSuperinterface(h.Parcelable)
                 .addFields(fields)
                 .addField(FieldSpec.builder(creatorClass, "CREATOR", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
                         .initializer(CodeBlock.of("$L", creatorImplClass))
@@ -149,19 +143,19 @@ public class OkBinderParcelableGenerator {
                         .build())
                 .addMethod(MethodSpec.constructorBuilder()
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(ParameterSpec.builder(t.Parcel, "source").build())
+                        .addParameter(ParameterSpec.builder(h.Parcel, "source").build())
                         .addCode(createFromParcelCode.build())
                         .build())
                 .addMethod(MethodSpec.methodBuilder("writeToParcel")
-                        .addAnnotation(t.Override)
+                        .addAnnotation(h.Override)
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(ParameterSpec.builder(t.Parcel, "dest").build())
+                        .addParameter(ParameterSpec.builder(h.Parcel, "dest").build())
                         .addParameter(ParameterSpec.builder(int.class, "flags").build())
                         .returns(void.class)
                         .addCode(writeToParcelCode.build())
                         .build())
                 .addMethod(MethodSpec.methodBuilder("describeContents")
-                        .addAnnotation(t.Override)
+                        .addAnnotation(h.Override)
                         .addModifiers(Modifier.PUBLIC)
                         .returns(int.class)
                         .addStatement("return 0")

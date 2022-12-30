@@ -15,13 +15,13 @@ public final class OkBinderProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
         Elements elementUtils = processingEnv.getElementUtils();
         Filer filer = processingEnv.getFiler();
-        RelatedTypes t = new RelatedTypes();
+        ProcessingHelper t = new ProcessingHelper(processingEnv);
 
         for (Element element : env.getElementsAnnotatedWith(AIDL.class)) {
             TypeElement typeElement = (TypeElement) element;
         }
         for (Element element : env.getElementsAnnotatedWith(GenParcelable.class)) {
-            new OkBinderParcelableGenerator(t, processingEnv, (TypeElement) element).generate();
+            new OkBinderParcelableGenerator(t, (TypeElement) element).generate();
         }
 
         generate(new OkBinderFactoryGenerator(t, elementUtils, filer),
