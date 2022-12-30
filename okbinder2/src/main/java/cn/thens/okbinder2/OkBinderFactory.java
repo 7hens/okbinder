@@ -34,8 +34,8 @@ public interface OkBinderFactory {
             ObjectFunctions.inject(this);
         }
 
-        protected void register(String methodId, Function func) {
-            functions.put(methodId, func);
+        protected void register(String functionId, Function func) {
+            functions.put(functionId, func);
         }
 
         public Object getRemoteObject() {
@@ -52,15 +52,8 @@ public interface OkBinderFactory {
             if (code == IBinder.FIRST_CALL_TRANSACTION) {
                 try {
                     data.enforceInterface(descriptor);
-                    int magicNumber = data.readInt();
-                    if (magicNumber != OkBinderVersion.MAGIC_NUMBER) {
-                        throw new IllegalArgumentException("Mismatched magic number " + magicNumber);
-                    }
-                    int version = data.readInt();
-                    if (!OkBinderVersion.isSupported(version)) {
-                        throw new IllegalArgumentException("Unsupported version " + version +
-                                ", the min supported is " + OkBinderVersion.minSupported());
-                    }
+                    checkMagicNumber(data.readInt());
+                    checkVersion(data.readInt());
                     String functionId = data.readString();
                     int argCount = data.readInt();
                     Object[] args = new Object[argCount];
@@ -92,6 +85,20 @@ public interface OkBinderFactory {
             }
             return super.onTransact(code, data, reply, flags);
         }
+
+        private void checkMagicNumber(int magicNumber) {
+            if (magicNumber != OkBinder.MAGIC_NUMBER) {
+                throw new IllegalArgumentException("Mismatched magic number " + magicNumber);
+            }
+        }
+
+        private void checkVersion(int version) {
+            OkBinderVersion.Spec currentVersion = OkBinderVersion.current();
+            if (!currentVersion.isSupported(version)) {
+                throw new IllegalArgumentException("Unsupported version " + version +
+                        ", current is " + currentVersion.code);
+            }
+        }
     }
 
     class BaseProxy {
@@ -105,7 +112,7 @@ public interface OkBinderFactory {
             this.descriptor = serviceClass.getName();
         }
 
-        protected Object transact(int flags, String methodId, Object... args) {
+        protected Object transact(int flags, String functionId, Object... args) {
             if (!binder.isBinderAlive()) {
                 throw new IllegalStateException("binder has died");
             }
@@ -114,9 +121,9 @@ public interface OkBinderFactory {
             Object result = null;
             try {
                 data.writeInterfaceToken(descriptor);
-                data.writeInt(OkBinderVersion.MAGIC_NUMBER);
-                data.writeInt(OkBinderVersion.current());
-                data.writeString(methodId);
+                data.writeInt(OkBinder.MAGIC_NUMBER);
+                data.writeInt(OkBinderVersion.current().code);
+                data.writeString(functionId);
                 if (args != null) {
                     data.writeInt(args.length);
                     for (Object arg : args) {

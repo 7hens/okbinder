@@ -81,7 +81,7 @@ public class OkBinderParcelableGenerator {
         createFromParamCode.addStatement("this.$L = $L", name, name);
         createFromDataCode.addStatement("this.$L = data.$L()", name, name);
 
-        String readMethodName = ElementParcelUtils.getReadMethodNameForType(type);
+        String readMethodName = ParcelCodeHelper.getReadMethodNameForType(type);
         if ("readParcelable".equals(readMethodName)) {
             createFromParcelCode.addStatement("this.$L = source.$L(getClass().getClassLoader())", name, readMethodName);
         } else if ("createTypedArray".equals(readMethodName)) {
@@ -91,7 +91,7 @@ public class OkBinderParcelableGenerator {
             createFromParcelCode.addStatement("this.$L = source.$L()", name, readMethodName);
         }
 
-        String writeMethodName = ElementParcelUtils.getWriteMethodNameForType(type);
+        String writeMethodName = ParcelCodeHelper.getWriteMethodNameForType(type);
         if ("writeParcelable".equals(writeMethodName) || "writeTypedArray".equals(writeMethodName)) {
             writeToParcelCode.addStatement("dest.$L($L(), flags)", writeMethodName, name);
         } else {

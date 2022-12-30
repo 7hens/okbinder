@@ -11,6 +11,7 @@ import java.util.List;
 @SuppressWarnings({"ConstantConditions", "unchecked"})
 public final class OkBinder {
     static final String TAG = "@OkBinder";
+    public static final int MAGIC_NUMBER = -1588420922;
 
     public static Binder create(Object remoteObject) {
         Class<?> okBinderInterface = getOkBinderInterface(remoteObject);

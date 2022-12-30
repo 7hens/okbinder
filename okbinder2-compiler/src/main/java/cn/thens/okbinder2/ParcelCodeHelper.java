@@ -1,17 +1,37 @@
 package cn.thens.okbinder2;
 
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
+
 import org.apache.commons.lang3.StringUtils;
 
-import java.lang.reflect.Type;
-import java.util.Locale;
-
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-final class ElementParcelUtils {
+final class ParcelCodeHelper {
     private static final String JAVA_LANG = "java.lang.";
     private static final String PARCELABLE = "Parcelable";
+
+    private final ProcessingHelper h;
+
+    ParcelCodeHelper(ProcessingHelper h) {
+        this.h = h;
+    }
+
+    public CodeBlock read(TypeMirror type) {
+        TypeElement typeElement = h.asElement(type);
+        String readMethodName = getReadMethodNameForType(type);
+        if ("readParcelable".equals(readMethodName)) {
+            return CodeBlock.of("$L(getClass().getClassLoader())", readMethodName);
+        }
+        if ("createTypedArray".equals(readMethodName)) {
+            TypeMirror componentType = ((ArrayType) type).getComponentType();
+            return CodeBlock.of("$L($T.CREATOR)", readMethodName, TypeName.get(componentType));
+        }
+        return CodeBlock.of("$L()", readMethodName);
+    }
 
     public static String getWriteMethodNameForType(TypeMirror type) {
         return "write" + getDataTypeNameForType(type);
