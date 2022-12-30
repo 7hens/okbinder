@@ -40,6 +40,12 @@ public final class IRemoteServiceImpl implements IRemoteService {
     }
 
     @Override
+    public GeneralData testParcelable(GeneralData generalData) {
+        log("testParcelable", generalData);
+        return generalData;
+    }
+
+    @Override
     public void testError(Boolean aBoolean, Parcelable aParcelable) {
         log("testError", new Object[]{aBoolean, aParcelable});
         throw new NullPointerException();

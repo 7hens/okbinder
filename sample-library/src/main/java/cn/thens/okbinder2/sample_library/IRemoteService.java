@@ -20,6 +20,8 @@ public interface IRemoteService {
 
     String testString(String text);
 
+    GeneralData testParcelable(GeneralData generalData);
+
     void testError(Boolean aBoolean, Parcelable aParcelable);
 
     IRemoteService testCallback(IRemoteService callback);

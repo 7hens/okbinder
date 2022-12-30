@@ -16,10 +16,11 @@ import android.widget.Toast;
 import java.util.Arrays;
 import java.util.Collections;
 
+import cn.thens.okbinder2.OkBinder;
+import cn.thens.okbinder2.sample_library.GeneralDataParcelable;
 import cn.thens.okbinder2.sample_library.IRemoteService;
 import cn.thens.okbinder2.sample_library.IRemoteServiceImpl;
 import cn.thens.okbinder2.sample_library.LogUtils;
-import cn.thens.okbinder2.OkBinder;
 
 /**
  * @author 7hens
@@ -44,6 +45,7 @@ public class ClientActivity extends Activity implements ServiceConnection, LogUt
         remoteService.testVoid();
         log("testInt", remoteService.testInt(1234));
         log("testString", remoteService.testString("hello"));
+        log("testParcelable", remoteService.testParcelable(new GeneralDataParcelable("", false, null, null, null, null)));
         log("testCallback", remoteService.testCallback(serviceA));
         log("testList", remoteService.testList(Arrays.asList(serviceA, serviceB)));
         log("testSparseArray", remoteService.testSparseArray(sparseArray));
