@@ -40,7 +40,14 @@ public final class OkBinderProcessor extends AbstractProcessor {
         for (Element element : env.getElementsAnnotatedWith(GenParcelable.class)) {
             checkIsInterface(element);
             TypeElement typeElement = (TypeElement) element;
-            List<ExecutableElement> methods = getMethods(h, typeElement);
+            List<ExecutableElement> methods = h.getAllMethods(typeElement).stream()
+                    .filter(m -> ElementUtils.isOverridable(m)
+                            && !ElementUtils.isMemberOf(m, Object.class)
+                            && !ElementUtils.isMemberOf(m, "android.os.Parcelable"))
+                    .collect(Collectors.toList());
+//            new DataBaseGenerator(h, typeElement, methods).generate();
+//            new DataWrapperGenerator(h, typeElement, methods).generate();
+//            new DataImplGenerator(h, typeElement, methods).generate();
             new DataParcelableGenerator(h, typeElement, methods).generate();
         }
     }
@@ -49,9 +56,4 @@ public final class OkBinderProcessor extends AbstractProcessor {
         Validate.isTrue(element.getKind().isInterface(), "Not an interface: %s", element);
     }
 
-    private static List<ExecutableElement> getMethods(ProcessingHelper h, TypeElement typeElement) {
-        return h.getAllMethods(typeElement).stream()
-                .filter(m -> !ElementUtils.isObjectMethod(m) && ElementUtils.isOverridable(m))
-                .collect(Collectors.toList());
-    }
 }

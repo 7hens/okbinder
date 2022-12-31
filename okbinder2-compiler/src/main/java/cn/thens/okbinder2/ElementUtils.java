@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
@@ -19,8 +20,20 @@ final class ElementUtils {
         return isType(method.getEnclosingElement().asType(), Object.class);
     }
 
+    public static boolean isMemberOf(Element element, Class<?> cls) {
+        return isType(getDeclaringType(element), cls);
+    }
+
+    public static boolean isMemberOf(Element element, String cls) {
+        return getDeclaringType(element).toString().equals(cls);
+    }
+
+    public static TypeMirror getDeclaringType(Element element) {
+        return element.getEnclosingElement().asType();
+    }
+
     public static boolean isType(TypeMirror typeMirror, Class<?> cls) {
-        return cls.getName().equals(typeMirror.toString());
+        return typeMirror.toString().equals(cls.getName());
     }
 
     @SuppressWarnings("unchecked")

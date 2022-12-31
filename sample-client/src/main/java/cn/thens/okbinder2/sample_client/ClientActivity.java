@@ -41,11 +41,12 @@ public class ClientActivity extends Activity implements ServiceConnection, LogUt
         sparseArray.put(1, serviceA);
         sparseArray.put(2, serviceB);
         int[] intArray = {1, 2};
+        GeneralDataParcelable generalData = new GeneralDataParcelable("", false, null, null, null, null);
 
         remoteService.testVoid();
         log("testInt", remoteService.testInt(1234));
         log("testString", remoteService.testString("hello"));
-        log("testParcelable", remoteService.testParcelable(new GeneralDataParcelable("", false, null, null, null, null)));
+        log("testParcelable", remoteService.testParcelable(generalData));
         log("testCallback", remoteService.testCallback(serviceA));
         log("testList", remoteService.testList(Arrays.asList(serviceA, serviceB)));
         log("testSparseArray", remoteService.testSparseArray(sparseArray));

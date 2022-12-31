@@ -1,7 +1,7 @@
 package cn.thens.okbinder2;
 
 import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.squareup.javapoet.ArrayTypeName;
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
@@ -37,88 +36,51 @@ public class DataParcelableGenerator {
     public void generate() {
         TypeName cTarget = ClassName.get(element.asType());
         ClassName cParcelable = h.newClassName(element, "Parcelable");
-        TypeName cCreator = ParameterizedTypeName.get(h.cParcelableCreator, cParcelable);
+        ClassName cCreator = cParcelable.nestedClass("Creator");
+        DataBaseGenerator dataBaseGenerator = new DataBaseGenerator(h, element, methods);
+        DataImplGenerator dataImplGenerator = new DataImplGenerator(h, element, methods);
 
         h.writeJavaFile(element, TypeSpec.classBuilder(cParcelable)
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(PUBLIC)
                 .addSuperinterface(cTarget)
                 .addSuperinterface(h.cParcelable)
-                .addField(FieldSpec.builder(cCreator, "CREATOR", Modifier.PUBLIC, STATIC, FINAL)
-                        .initializer(CodeBlock.of("$L", anonymousCreatorClass(cCreator, cParcelable)))
-                        .build())
-                .addMethod(fullParamsConstructor())
-                .addMethod(wrapConstructor(cTarget))
-                .addMethod(parcelableConstructor())
+                .addField(creatorField(cCreator))
+                .addMethod(describeContentsMethod())
                 .addMethod(writeToParcelMethod())
-                .addMethod(MethodSpec.methodBuilder("describeContents")
-                        .addAnnotation(h.cOverride)
-                        .addModifiers(Modifier.PUBLIC)
-                        .returns(int.class)
-                        .addStatement("return 0")
-                        .build())
-                .addFields(dataFields())
-                .addMethods(dataMethods())
-                .addMethod(equalsMethod())
-                .addMethod(hashCodeMethod())
-                .addMethod(toStringMethod(cParcelable))
+                .addMethod(createFromParcelMethod(cParcelable))
+                .addMethod(dataImplGenerator.createFromDataMethod(cParcelable))
+                .addFields(dataImplGenerator.dataFields())
+                .addMethod(dataImplGenerator.noParamsConstructor())
+                .addMethod(dataImplGenerator.fullParamsConstructor())
+                .addMethods(dataImplGenerator.dataMethods())
+                .addMethods(dataImplGenerator.setterMethods(cParcelable))
+                .addMethod(dataBaseGenerator.equalsMethod())
+                .addMethod(dataBaseGenerator.hashCodeMethod())
+                .addMethod(dataBaseGenerator.toStringMethod(cParcelable))
+                .addType(creatorClass(cCreator, cParcelable))
                 .build());
     }
 
-    private List<FieldSpec> dataFields() {
-        return methods.stream()
-                .map(m -> JavaPoetUtils.toFieldBuilder(m)
-                        .addModifiers(PRIVATE, FINAL)
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    private List<MethodSpec> dataMethods() {
-        return methods.stream()
-                .map(m -> JavaPoetUtils.toOverrideBuilder(m)
-                        .addStatement("return $L", m.getSimpleName())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    private MethodSpec fullParamsConstructor() {
-        List<ParameterSpec> params = methods.stream()
-                .map(m -> JavaPoetUtils.toParameterBuilder(m).build())
-                .collect(Collectors.toList());
-
-        CodeBlock statements = JavaPoetUtils.statements(methods.stream()
-                .map(ExecutableElement::getSimpleName)
-                .map(name -> CodeBlock.of("this.$L = $L", name, name))
-                .collect(Collectors.toList()));
-
-        return MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
-                .addParameters(params)
-                .addCode(statements)
-                .build();
-    }
-
     private MethodSpec wrapConstructor(TypeName cTarget) {
-        CodeBlock statements = JavaPoetUtils.statements(methods.stream()
-                .map(ExecutableElement::getSimpleName)
-                .map(name -> CodeBlock.of("this.$L = data.$L()", name, name))
-                .collect(Collectors.toList()));
-
         return MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(PUBLIC)
                 .addParameter(ParameterSpec.builder(cTarget, "data").build())
-                .addCode(statements)
+                .addStatement(CodeBlock.of("super(data)"))
                 .build();
     }
 
-    private MethodSpec parcelableConstructor() {
+    private MethodSpec createFromParcelMethod(ClassName myClass) {
         CodeBlock statements = JavaPoetUtils.statements(methods.stream()
                 .map(this::readParcelableCode)
                 .collect(Collectors.toList()));
 
-        return MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PUBLIC)
+        return MethodSpec.methodBuilder("from")
+                .addModifiers(PUBLIC, STATIC)
                 .addParameter(ParameterSpec.builder(h.cParcel, "source").build())
+                .returns(myClass)
+                .addStatement("$T data = new $T()", myClass, myClass)
                 .addCode(statements)
+                .addStatement("return data", myClass)
                 .build();
     }
 
@@ -127,13 +89,13 @@ public class DataParcelableGenerator {
         TypeMirror type = method.getReturnType();
         String readMethodName = ParcelCodeHelper.getReadMethodNameForType(type);
         if ("readParcelable".equals(readMethodName)) {
-            return CodeBlock.of("this.$L = source.$L(getClass().getClassLoader())", name, readMethodName);
+            return CodeBlock.of("data.$L(source.$L(data.getClass().getClassLoader()))", name, readMethodName);
         }
         if ("createTypedArray".equals(readMethodName)) {
             TypeMirror componentType = ((ArrayType) type).getComponentType();
-            return CodeBlock.of("this.$L = source.$L($T.CREATOR)", name, readMethodName, TypeName.get(componentType));
+            return CodeBlock.of("data.$L(source.$L($T.CREATOR))", name, readMethodName, TypeName.get(componentType));
         }
-        return CodeBlock.of("this.$L = source.$L()", name, readMethodName);
+        return CodeBlock.of("data.$L(source.$L())", name, readMethodName);
     }
 
     private MethodSpec writeToParcelMethod() {
@@ -143,7 +105,7 @@ public class DataParcelableGenerator {
 
         return MethodSpec.methodBuilder("writeToParcel")
                 .addAnnotation(h.cOverride)
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(PUBLIC)
                 .addParameter(ParameterSpec.builder(h.cParcel, "dest").build())
                 .addParameter(ParameterSpec.builder(int.class, "flags").build())
                 .returns(void.class)
@@ -161,77 +123,40 @@ public class DataParcelableGenerator {
         return CodeBlock.of("dest.$L($L())", writeMethodName, name);
     }
 
-    private TypeSpec anonymousCreatorClass(TypeName cCreator, TypeName cParcelable) {
-        return TypeSpec.anonymousClassBuilder("")
-                .addSuperinterface(cCreator)
+    private MethodSpec describeContentsMethod() {
+        return MethodSpec.methodBuilder("describeContents")
+                .addAnnotation(h.cOverride)
+                .addModifiers(PUBLIC)
+                .returns(int.class)
+                .addStatement("return 0")
+                .build();
+    }
+
+    private FieldSpec creatorField(ClassName cCreator) {
+        return FieldSpec.builder(cCreator, "CREATOR", PUBLIC, STATIC, FINAL)
+                .initializer(CodeBlock.of("new $T()", cCreator))
+                .build();
+    }
+
+    private TypeSpec creatorClass(ClassName cCreator, TypeName cParcelable) {
+        TypeName cParcelableCreator = ParameterizedTypeName.get(h.cParcelableCreator, cParcelable);
+        return TypeSpec.classBuilder(cCreator)
+                .addModifiers(PUBLIC, STATIC)
+                .addSuperinterface(cParcelableCreator)
                 .addMethod(MethodSpec.methodBuilder("createFromParcel")
                         .addAnnotation(h.cOverride)
-                        .addModifiers(Modifier.PUBLIC)
+                        .addModifiers(PUBLIC)
                         .addParameter(ParameterSpec.builder(h.cParcel, "source").build())
                         .returns(cParcelable)
-                        .addStatement("return new $T(source)", cParcelable)
+                        .addStatement("return from(source)")
                         .build())
                 .addMethod(MethodSpec.methodBuilder("newArray")
                         .addAnnotation(h.cOverride)
-                        .addModifiers(Modifier.PUBLIC)
+                        .addModifiers(PUBLIC)
                         .addParameter(ParameterSpec.builder(int.class, "size").build())
                         .returns(ArrayTypeName.of(cParcelable))
                         .addStatement("return new $T[$L]", cParcelable, "size")
                         .build())
-                .build();
-    }
-
-    private MethodSpec equalsMethod() {
-        TypeName targetClass = ClassName.get(element.asType());
-
-        CodeBlock joinedComparisons = JavaPoetUtils.join(" && \n", methods.stream()
-                .map(ExecutableElement::getSimpleName)
-                .map(name -> CodeBlock.of("$T.equals($L(), other.$L())", h.cObjects, name, name))
-                .collect(Collectors.toList()));
-
-        return MethodSpec.methodBuilder("equals")
-                .addAnnotation(h.cOverride)
-                .addModifiers(Modifier.PUBLIC)
-                .addParameter(ParameterSpec.builder(h.cObject, "obj").build())
-                .returns(boolean.class)
-                .addCode(CodeBlock.builder()
-                        .beginControlFlow("if (obj == this)", "obj")
-                        .addStatement("return true")
-                        .endControlFlow()
-                        .beginControlFlow("if (!(obj instanceof $T))", targetClass)
-                        .addStatement("return false")
-                        .endControlFlow()
-                        .addStatement("$T other = ($T) obj", targetClass, targetClass)
-                        .addStatement("return $L", joinedComparisons)
-                        .build())
-                .build();
-    }
-
-    private MethodSpec hashCodeMethod() {
-        CodeBlock hashCodeArgs = JavaPoetUtils.join(", \n", methods.stream()
-                .map(ExecutableElement::getSimpleName)
-                .map(name -> CodeBlock.of("$L()", name))
-                .collect(Collectors.toList()));
-
-        return MethodSpec.methodBuilder("hashCode")
-                .addAnnotation(h.cOverride)
-                .addModifiers(Modifier.PUBLIC)
-                .returns(int.class)
-                .addStatement("return $T.hashCode(new $T[]{$L})", h.cArrays, h.cObject, hashCodeArgs)
-                .build();
-    }
-
-    private MethodSpec toStringMethod(TypeName cParcelable) {
-        CodeBlock fieldCodes = JavaPoetUtils.join(", ", methods.stream()
-                .map(ExecutableElement::getSimpleName)
-                .map(name -> CodeBlock.of("$L=\" + $L() \n+ \"", name, name))
-                .collect(Collectors.toList()));
-
-        return MethodSpec.methodBuilder("toString")
-                .addAnnotation(h.cOverride)
-                .addModifiers(Modifier.PUBLIC)
-                .returns(String.class)
-                .addStatement("return \"$T($L)\"", cParcelable, fieldCodes)
                 .build();
     }
 }

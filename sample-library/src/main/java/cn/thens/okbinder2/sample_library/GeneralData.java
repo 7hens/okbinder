@@ -1,9 +1,11 @@
 package cn.thens.okbinder2.sample_library;
 
+import android.os.Parcelable;
+
 import cn.thens.okbinder2.GenParcelable;
 
 @GenParcelable
-public interface GeneralData {
+public interface GeneralData extends Parcelable {
 
     String name();
 
