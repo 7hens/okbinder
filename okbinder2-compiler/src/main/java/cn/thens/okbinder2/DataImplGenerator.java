@@ -89,6 +89,34 @@ public class DataImplGenerator {
                 .build();
     }
 
+    public MethodSpec mergeWithMethod() {
+        TypeName targetClass = h.getElementType();
+        CodeBlock statements = methods.stream()
+                .map(m -> {
+                    String name = m.getSimpleName().toString();
+                    CodeBlock code = CodeBlock.of("this.$L(source.$L())", name, name);
+                    if (m.getReturnType().getKind().isPrimitive()) {
+                        return CodeBlock.builder()
+                                .addStatement(code)
+                                .build();
+                    }
+                    return CodeBlock.builder()
+                            .beginControlFlow("if (source.$L() != null)", name)
+                            .addStatement(code)
+                            .endControlFlow()
+                            .build();
+                })
+                .collect(CodeBlock.joining(""));
+
+        return MethodSpec.methodBuilder("mergeWith")
+                .addModifiers(PUBLIC)
+                .addParameter(ParameterSpec.builder(targetClass, "source").build())
+                .returns(resultClass)
+                .addCode(statements)
+                .addStatement("return this")
+                .build();
+    }
+
     public List<MethodSpec> dataMethods() {
         return methods.stream()
                 .map(m -> JavaPoetUtils.toOverrideBuilder(m)

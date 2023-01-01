@@ -13,6 +13,8 @@ public interface GeneralData extends Parcelable {
 
     SampleParcelable parcelable();
 
+    int pInteger();
+
     int[] intArray();
 
     float[] floatArray();

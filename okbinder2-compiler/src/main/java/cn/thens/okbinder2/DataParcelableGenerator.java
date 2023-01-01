@@ -48,6 +48,7 @@ public class DataParcelableGenerator {
                 .addFields(dataImplGenerator.dataFields())
                 .addMethod(dataImplGenerator.noParamsConstructor())
                 .addMethod(dataImplGenerator.fullParamsConstructor())
+                .addMethod(dataImplGenerator.mergeWithMethod())
                 .addMethods(dataImplGenerator.dataMethods())
                 .addMethods(dataImplGenerator.setterMethods())
                 .addMethod(dataBaseGenerator.equalsMethod())
