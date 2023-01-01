@@ -21,7 +21,6 @@ final class ParcelCodeHelper {
     }
 
     public CodeBlock read(TypeMirror type) {
-        TypeElement typeElement = h.asElement(type);
         String readMethodName = getReadMethodNameForType(type);
         if ("readParcelable".equals(readMethodName)) {
             return CodeBlock.of("$L(getClass().getClassLoader())", readMethodName);

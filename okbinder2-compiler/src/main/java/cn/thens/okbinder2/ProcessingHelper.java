@@ -12,12 +12,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
-final class ProcessingHelper {
+public class ProcessingHelper {
     private static final String ANDROID_OS = "android.os";
     ClassName cBinder = ClassName.get(ANDROID_OS, "Binder");
     ClassName cIBinder = ClassName.get(ANDROID_OS, "IBinder");
@@ -40,45 +38,39 @@ final class ProcessingHelper {
     ClassName cClass = ClassName.get(Class.class);
 
     private final ProcessingEnvironment env;
+    private final TypeElement element;
 
-    ProcessingHelper(ProcessingEnvironment env) {
+    ProcessingHelper(ProcessingEnvironment env, TypeElement element) {
         this.env = env;
+        this.element = element;
     }
 
     public ProcessingEnvironment env() {
         return env;
     }
 
-    public TypeElement asElement(TypeMirror type) {
-        return ((TypeElement) env.getTypeUtils().asElement(type));
+    public TypeName getElementType() {
+        return ClassName.get(element);
     }
 
-    public TypeMirror asTypeMirror(TypeName type) {
-        return env.getElementUtils().getTypeElement(type.toString()).asType();
-    }
-
-    public List<ExecutableElement> getAllMethods(TypeElement element) {
-        return env.getElementUtils().getAllMembers(element).stream()
+    public List<ExecutableElement> getAllMethods() {
+        return env.getElementUtils()
+                .getAllMembers(element).stream()
                 .filter(member -> member instanceof ExecutableElement)
-                .map(member -> (ExecutableElement) member)
-                .collect(Collectors.toList());
+                .map(member -> (ExecutableElement) member).collect(Collectors.toList());
     }
 
-    public String getPackageName(Element element) {
+    public String getPackageName() {
         return env.getElementUtils().getPackageOf(element).getQualifiedName().toString();
     }
 
-    public ClassName newClassName(Element element, String suffix) {
-        return ClassName.get(getPackageName(element), element.getSimpleName() + suffix);
+    public ClassName newClassName(String suffix) {
+        return ClassName.get(getPackageName(), element.getSimpleName() + suffix);
     }
 
-    public void writeJavaFile(Element element, TypeSpec typeSpec) {
-        writeJavaFile(getPackageName(element), typeSpec);
-    }
-
-    public void writeJavaFile(String packageName, TypeSpec typeSpec) {
+    public void writeJavaFile(TypeSpec typeSpec) {
         try {
-            JavaFile.builder(packageName, typeSpec)
+            JavaFile.builder(getPackageName(), typeSpec)
                     .indent("    ")
                     .build()
                     .writeTo(env.getFiler());

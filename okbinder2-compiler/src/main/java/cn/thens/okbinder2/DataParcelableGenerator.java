@@ -18,46 +18,42 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
 
 public class DataParcelableGenerator {
     private final ProcessingHelper h;
-    private final TypeElement element;
     private final List<ExecutableElement> methods;
+    private final ClassName resultClass;
 
-    public DataParcelableGenerator(ProcessingHelper h, TypeElement element, List<ExecutableElement> methods) {
+    public DataParcelableGenerator(ProcessingHelper h, List<ExecutableElement> methods, ClassName resultClass) {
         this.h = h;
-        this.element = element;
         this.methods = methods;
+        this.resultClass = resultClass;
     }
 
     public void generate() {
-        TypeName cTarget = ClassName.get(element.asType());
-        ClassName cParcelable = h.newClassName(element, "Parcelable");
-        ClassName cCreator = cParcelable.nestedClass("Creator");
-        DataBaseGenerator dataBaseGenerator = new DataBaseGenerator(h, element, methods);
-        DataImplGenerator dataImplGenerator = new DataImplGenerator(h, element, methods);
+        DataBaseGenerator dataBaseGenerator = new DataBaseGenerator(h, methods, resultClass);
+        DataImplGenerator dataImplGenerator = new DataImplGenerator(h, methods, resultClass);
 
-        h.writeJavaFile(element, TypeSpec.classBuilder(cParcelable)
+        h.writeJavaFile(TypeSpec.classBuilder(resultClass)
                 .addModifiers(PUBLIC)
-                .addSuperinterface(cTarget)
+                .addSuperinterface(h.getElementType())
                 .addSuperinterface(h.cParcelable)
-                .addField(creatorField(cCreator))
+                .addField(creatorField())
                 .addMethod(describeContentsMethod())
                 .addMethod(writeToParcelMethod())
-                .addMethod(createFromParcelMethod(cParcelable))
-                .addMethod(dataImplGenerator.createFromDataMethod(cParcelable))
+                .addMethod(createFromParcelMethod())
+                .addMethod(dataImplGenerator.createFromDataMethod())
                 .addFields(dataImplGenerator.dataFields())
                 .addMethod(dataImplGenerator.noParamsConstructor())
                 .addMethod(dataImplGenerator.fullParamsConstructor())
                 .addMethods(dataImplGenerator.dataMethods())
-                .addMethods(dataImplGenerator.setterMethods(cParcelable))
+                .addMethods(dataImplGenerator.setterMethods())
                 .addMethod(dataBaseGenerator.equalsMethod())
                 .addMethod(dataBaseGenerator.hashCodeMethod())
-                .addMethod(dataBaseGenerator.toStringMethod(cParcelable))
-                .addType(creatorClass(cCreator, cParcelable))
+                .addMethod(dataBaseGenerator.toStringMethod())
+                .addType(creatorClass())
                 .build());
     }
 
@@ -69,7 +65,7 @@ public class DataParcelableGenerator {
                 .build();
     }
 
-    private MethodSpec createFromParcelMethod(ClassName myClass) {
+    private MethodSpec createFromParcelMethod() {
         CodeBlock statements = JavaPoetUtils.statements(methods.stream()
                 .map(this::readParcelableCode)
                 .collect(Collectors.toList()));
@@ -77,10 +73,10 @@ public class DataParcelableGenerator {
         return MethodSpec.methodBuilder("from")
                 .addModifiers(PUBLIC, STATIC)
                 .addParameter(ParameterSpec.builder(h.cParcel, "source").build())
-                .returns(myClass)
-                .addStatement("$T data = new $T()", myClass, myClass)
+                .returns(resultClass)
+                .addStatement("$T data = new $T()", resultClass, resultClass)
                 .addCode(statements)
-                .addStatement("return data", myClass)
+                .addStatement("return data", resultClass)
                 .build();
     }
 
@@ -132,14 +128,16 @@ public class DataParcelableGenerator {
                 .build();
     }
 
-    private FieldSpec creatorField(ClassName cCreator) {
+    private FieldSpec creatorField() {
+        ClassName cCreator = resultClass.nestedClass("Creator");
         return FieldSpec.builder(cCreator, "CREATOR", PUBLIC, STATIC, FINAL)
                 .initializer(CodeBlock.of("new $T()", cCreator))
                 .build();
     }
 
-    private TypeSpec creatorClass(ClassName cCreator, TypeName cParcelable) {
-        TypeName cParcelableCreator = ParameterizedTypeName.get(h.cParcelableCreator, cParcelable);
+    private TypeSpec creatorClass() {
+        ClassName cCreator = resultClass.nestedClass("Creator");
+        TypeName cParcelableCreator = ParameterizedTypeName.get(h.cParcelableCreator, resultClass);
         return TypeSpec.classBuilder(cCreator)
                 .addModifiers(PUBLIC, STATIC)
                 .addSuperinterface(cParcelableCreator)
@@ -147,15 +145,15 @@ public class DataParcelableGenerator {
                         .addAnnotation(h.cOverride)
                         .addModifiers(PUBLIC)
                         .addParameter(ParameterSpec.builder(h.cParcel, "source").build())
-                        .returns(cParcelable)
+                        .returns(resultClass)
                         .addStatement("return from(source)")
                         .build())
                 .addMethod(MethodSpec.methodBuilder("newArray")
                         .addAnnotation(h.cOverride)
                         .addModifiers(PUBLIC)
                         .addParameter(ParameterSpec.builder(int.class, "size").build())
-                        .returns(ArrayTypeName.of(cParcelable))
-                        .addStatement("return new $T[$L]", cParcelable, "size")
+                        .returns(ArrayTypeName.of(resultClass))
+                        .addStatement("return new $T[$L]", resultClass, "size")
                         .build())
                 .build();
     }

@@ -16,32 +16,28 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 
 public class DataImplGenerator {
     private final ProcessingHelper h;
-    private final TypeElement element;
     private final List<ExecutableElement> methods;
+    private final ClassName resultClass;
 
-    public DataImplGenerator(ProcessingHelper h, TypeElement element, List<ExecutableElement> methods) {
+    public DataImplGenerator(ProcessingHelper h, List<ExecutableElement> methods, ClassName resultClass) {
         this.h = h;
-        this.element = element;
         this.methods = methods;
+        this.resultClass = resultClass;
     }
 
     public void generate() {
-        ClassName cImpl = h.newClassName(element, "Impl");
-
-        h.writeJavaFile(element, TypeSpec.classBuilder(cImpl)
+        h.writeJavaFile(TypeSpec.classBuilder(resultClass)
                 .addModifiers(PUBLIC)
-                .superclass(h.newClassName(element, "Base"))
+                .superclass(h.newClassName("Base"))
                 .addMethod(noParamsConstructor())
                 .addMethod(fullParamsConstructor())
-                .addMethod(createFromDataMethod(cImpl))
+                .addMethod(createFromDataMethod())
                 .addFields(dataFields())
                 .addMethods(dataMethods())
-                .addMethods(setterMethods(cImpl))
+                .addMethods(setterMethods())
                 .build());
     }
 
@@ -76,8 +72,8 @@ public class DataImplGenerator {
                 .build();
     }
 
-    public MethodSpec createFromDataMethod(TypeName myClass) {
-        TypeName targetClass = ClassName.get(element.asType());
+    public MethodSpec createFromDataMethod() {
+        TypeName targetClass = h.getElementType();
         CodeBlock statements = JavaPoetUtils.statements(methods.stream()
                 .map(ExecutableElement::getSimpleName)
                 .map(name -> CodeBlock.of("data.$L(source.$L())", name, name))
@@ -86,8 +82,8 @@ public class DataImplGenerator {
         return MethodSpec.methodBuilder("from")
                 .addModifiers(PUBLIC, STATIC)
                 .addParameter(ParameterSpec.builder(targetClass, "source").build())
-                .addStatement("$T data = new $T()", myClass, myClass)
-                .returns(myClass)
+                .addStatement("$T data = new $T()", resultClass, resultClass)
+                .returns(resultClass)
                 .addCode(statements)
                 .addStatement("return data")
                 .build();
@@ -101,7 +97,7 @@ public class DataImplGenerator {
                 .collect(Collectors.toList());
     }
 
-    public List<MethodSpec> setterMethods(TypeName myClass) {
+    public List<MethodSpec> setterMethods() {
         return methods.stream()
                 .map(m -> {
                     String name = m.getSimpleName().toString();
@@ -109,7 +105,7 @@ public class DataImplGenerator {
                     return MethodSpec.methodBuilder(name)
                             .addModifiers(PUBLIC)
                             .addParameter(ParameterSpec.builder(type, "value").build())
-                            .returns(myClass)
+                            .returns(resultClass)
                             .addStatement("this.$L = value", name)
                             .addStatement("return this")
                             .build();

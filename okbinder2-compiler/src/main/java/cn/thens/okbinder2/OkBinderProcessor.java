@@ -1,5 +1,7 @@
 package cn.thens.okbinder2;
 
+import com.squareup.javapoet.ClassName;
+
 import org.apache.commons.lang3.Validate;
 
 import java.util.List;
@@ -16,9 +18,8 @@ import javax.lang.model.element.TypeElement;
 public final class OkBinderProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
-        ProcessingHelper h = new ProcessingHelper(processingEnv);
-        resolveAidl(h, env);
-        resolveGenParcelable(h, env);
+        resolveAidl(env);
+        resolveGenParcelable(env);
         return false;
     }
 
@@ -29,18 +30,26 @@ public final class OkBinderProcessor extends AbstractProcessor {
                 .collect(Collectors.toSet());
     }
 
-    private void resolveAidl(ProcessingHelper h, RoundEnvironment env) {
+    private void resolveAidl(RoundEnvironment env) {
         for (Element element : env.getElementsAnnotatedWith(AIDL.class)) {
             checkIsInterface(element);
-            new OkBinderFactoryGenerator(h, (TypeElement) element).generate();
+            TypeElement typeElement = (TypeElement) element;
+            ProcessingHelper h = new ProcessingHelper(processingEnv, typeElement);
+            List<ExecutableElement> methods = h.getAllMethods().stream()
+                    .filter(m -> ElementUtils.isOverridable(m)
+                            && !ElementUtils.isMemberOf(m, Object.class))
+                    .collect(Collectors.toList());
+            new OkBinderFactoryGenerator(h, methods, h.newClassName("Factory")).generate();
         }
     }
 
-    private void resolveGenParcelable(ProcessingHelper h, RoundEnvironment env) {
+    private void resolveGenParcelable(RoundEnvironment env) {
         for (Element element : env.getElementsAnnotatedWith(GenParcelable.class)) {
             checkIsInterface(element);
             TypeElement typeElement = (TypeElement) element;
-            List<ExecutableElement> methods = h.getAllMethods(typeElement).stream()
+            ProcessingHelper h = new ProcessingHelper(processingEnv, typeElement);
+            ClassName resultClass = h.newClassName("Parcelable");
+            List<ExecutableElement> methods = h.getAllMethods().stream()
                     .filter(m -> ElementUtils.isOverridable(m)
                             && !ElementUtils.isMemberOf(m, Object.class)
                             && !ElementUtils.isMemberOf(m, "android.os.Parcelable"))
@@ -48,7 +57,7 @@ public final class OkBinderProcessor extends AbstractProcessor {
 //            new DataBaseGenerator(h, typeElement, methods).generate();
 //            new DataWrapperGenerator(h, typeElement, methods).generate();
 //            new DataImplGenerator(h, typeElement, methods).generate();
-            new DataParcelableGenerator(h, typeElement, methods).generate();
+            new DataParcelableGenerator(h, methods, resultClass).generate();
         }
     }
 

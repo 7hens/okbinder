@@ -12,33 +12,32 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 
 public class DataBaseGenerator {
     private final ProcessingHelper h;
-    private final TypeElement element;
     private final List<ExecutableElement> methods;
+    private final ClassName resultClass;
 
-    public DataBaseGenerator(ProcessingHelper h, TypeElement element, List<ExecutableElement> methods) {
+    public DataBaseGenerator(ProcessingHelper h, List<ExecutableElement> methods, ClassName resultClass) {
         this.h = h;
-        this.element = element;
         this.methods = methods;
+        this.resultClass = resultClass;
     }
 
     public void generate() {
-        ClassName cBase = h.newClassName(element, "Base");
-        h.writeJavaFile(element, TypeSpec.classBuilder(cBase)
+//        ClassName cBase = h.newClassName(element, "Base");
+        h.writeJavaFile(TypeSpec.classBuilder(resultClass)
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addSuperinterface(ClassName.get(element.asType()))
+                .addSuperinterface(h.getElementType())
                 .addMethod(equalsMethod())
                 .addMethod(hashCodeMethod())
-                .addMethod(toStringMethod(cBase))
+                .addMethod(toStringMethod())
                 .addMethod(toDataStringMethod())
                 .build());
     }
 
     public MethodSpec equalsMethod() {
-        TypeName targetClass = ClassName.get(element.asType());
+        TypeName elementType = h.getElementType();
 
         CodeBlock joinedComparisons = JavaPoetUtils.join(" && \n", methods.stream()
                 .map(ExecutableElement::getSimpleName)
@@ -54,10 +53,10 @@ public class DataBaseGenerator {
                         .beginControlFlow("if (obj == this)", "obj")
                         .addStatement("return true")
                         .endControlFlow()
-                        .beginControlFlow("if (!(obj instanceof $T))", targetClass)
+                        .beginControlFlow("if (!(obj instanceof $T))", elementType)
                         .addStatement("return false")
                         .endControlFlow()
-                        .addStatement("$T other = ($T) obj", targetClass, targetClass)
+                        .addStatement("$T other = ($T) obj", elementType, elementType)
                         .addStatement("return $L", joinedComparisons)
                         .build())
                 .build();
@@ -77,7 +76,7 @@ public class DataBaseGenerator {
                 .build();
     }
 
-    public MethodSpec toStringMethod(TypeName myClass) {
+    public MethodSpec toStringMethod() {
         CodeBlock fieldCodes = JavaPoetUtils.join(", ", methods.stream()
                 .map(ExecutableElement::getSimpleName)
                 .map(name -> CodeBlock.of("$L=\" + $L() \n+ \"", name, name))
@@ -87,7 +86,7 @@ public class DataBaseGenerator {
                 .addAnnotation(h.cOverride)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
-                .addStatement("return \"$T($L)\"", myClass, fieldCodes)
+                .addStatement("return \"$T($L)\"", resultClass, fieldCodes)
                 .build();
     }
 

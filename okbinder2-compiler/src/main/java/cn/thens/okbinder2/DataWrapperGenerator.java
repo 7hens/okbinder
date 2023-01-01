@@ -4,7 +4,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -18,37 +17,34 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 
 public class DataWrapperGenerator {
     private final ProcessingHelper h;
-    private final TypeElement element;
     private final List<ExecutableElement> methods;
+    private final ClassName resultClass;
 
-    public DataWrapperGenerator(ProcessingHelper h, TypeElement element, List<ExecutableElement> methods) {
+    public DataWrapperGenerator(ProcessingHelper h, List<ExecutableElement> methods, ClassName resultClass) {
         this.h = h;
-        this.element = element;
         this.methods = methods;
+        this.resultClass = resultClass;
     }
 
     public void generate() {
-        TypeName targetClass = ClassName.get(element.asType());
-        ClassName cWrapper = h.newClassName(element, "Wrapper");
+        TypeName targetClass = h.getElementType();
 
-        h.writeJavaFile(element, TypeSpec.classBuilder(cWrapper)
+        h.writeJavaFile(TypeSpec.classBuilder(resultClass)
                 .addModifiers(PUBLIC, ABSTRACT)
-                .superclass(h.newClassName(element, "Base"))
+                .superclass(h.newClassName("Base"))
                 .addField(FieldSpec.builder(targetClass, "data", PRIVATE, FINAL).build())
-                .addMethod(wrapConstructor(targetClass))
+                .addMethod(wrapConstructor())
                 .addMethods(dataMethods())
                 .build());
     }
 
-    public MethodSpec wrapConstructor(TypeName targetClass) {
+    public MethodSpec wrapConstructor() {
         return MethodSpec.constructorBuilder()
                 .addModifiers(PUBLIC)
-                .addParameter(ParameterSpec.builder(targetClass, "data").build())
+                .addParameter(ParameterSpec.builder(resultClass, "data").build())
                 .addStatement(CodeBlock.of("this.data = data"))
                 .build();
     }
